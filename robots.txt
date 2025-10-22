@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vipulmehrania3.github.io/VIPsawal/sitemap.xml
