@@ -3,92 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Free NEET Quiz Practice | VIPQuizs - Biology, Physics & Chemistry Tests</title>
-    
-    <!-- 🔹 SEO Meta Tags -->
-    <meta name="description" content="Attempt free NEET quizzes on VIPQuizs. Practice Biology, Physics, and Chemistry NEET questions with instant results and detailed explanations. Perfect for NEET 2025 preparation.">
-    <meta name="keywords" content="NEET quiz, NEET mock test, NEET biology quiz, NEET chemistry quiz, NEET physics quiz, NEET 2025, NEET practice test, NEET previous year questions, NEET daily quiz">
-    <link rel="canonical" href="https://vipquizs.in/">
-
-    <!-- 🔹 Open Graph (Social Media Preview) -->
-    <meta property="og:title" content="VIPQuizs | Free NEET Practice Quizzes">
-    <meta property="og:description" content="Free NEET practice quizzes for Biology, Physics, and Chemistry. Attempt chapterwise NEET quizzes instantly.">
-    <meta property="og:url" content="https://vipquizs.in/">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://vipquizs.in/preview.png">
-
-    <!-- 🔹 Favicon -->
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-
-    <!-- 🔹 Stylesheet -->
+    <title>VIPQuizs</title>
+    <!-- Google Fonts for a nicer typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-    <div class="container">
-        <header>
-            <h1>VIPQuizs – Free NEET Practice Quizzes</h1>
-            <p>Prepare for <strong>NEET 2025</strong> with chapterwise online quizzes in Biology, Physics, and Chemistry.</p>
-        </header>
+    <div class="mobile-container">
+        <!-- Main Application Screen -->
+        <main class="app-main">
+            <!-- Screen 1: Quiz Setup -->
+            <section id="quiz-setup" class="app-screen active">
+                <header class="app-header">
+                    <i class="fas fa-bars"></i>
+                    <h1>VIPQuizs</h1>
+                    <i class="fas fa-user-circle"></i>
+                </header>
 
-        <main id="quiz-setup">
-            <div class="language-toggle">
-                <button id="toggle-hindi-btn">Switch to Hindi Medium</button>
-            </div>
+                <div class="screen-content">
+                    <div class="language-toggle">
+                        <button id="toggle-hindi-btn">Switch to Hindi Medium</button>
+                    </div>
 
-            <div class="input-group">
-                <label for="subject-select"><h2>Select Subject:</h2></label>
-                <select id="subject-select">
-                    <option value="">-- Choose Subject --</option>
-                    <option value="botany">Botany</option>
-                    <option value="zoology">Zoology</option>
-                    <option value="physics">Physics</option>
-                    <option value="chemistry">Chemistry</option>
-                </select>
-            </div>
+                    <div class="input-group">
+                        <label for="subject-select">Select Subject</label>
+                        <select id="subject-select">
+                            <option value="">-- Choose Subject --</option>
+                            <option value="botany">Botany</option>
+                            <option value="zoology">Zoology</option>
+                            <option value="physics">Physics</option>
+                            <option value="chemistry">Chemistry</option>
+                        </select>
+                    </div>
 
-            <div class="input-group">
-                <label for="chapter-select"><h2>Select Chapter:</h2></label>
-                <select id="chapter-select" disabled>
-                    <option value="">-- Select Chapter --</option>
-                </select>
-            </div>
+                    <div class="input-group">
+                        <label for="chapter-select">Select Chapter</label>
+                        <select id="chapter-select" disabled>
+                            <option value="">-- Select Chapter --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group-row">
+                        <div class="input-group">
+                            <label for="question-limit">Questions</label>
+                            <input type="number" id="question-limit" value="10" min="1" max="50">
+                        </div>
+                    </div>
 
-            <div class="input-group">
-                <label for="question-limit"><h2>Number of Questions:</h2></label>
-                <input type="number" id="question-limit" value="10" min="1" max="50">
-            </div>
+                    <div class="input-group">
+                        <label for="style-prompt">Question Style (Optional)</label>
+                        <textarea id="style-prompt" rows="3" placeholder="e.g., assertion-reason, PYQs from 2022..."></textarea>
+                    </div>
 
-            <div class="input-group">
-                <label for="style-prompt"><h2>Question Style Prompt (Optional):</h2></label>
-                <textarea id="style-prompt" rows="3" placeholder="e.g., previous year NEET questions, assertion-reason, or case-based questions..."></textarea>
-            </div>
+                    <button id="start-quiz-btn" class="btn btn-primary" disabled>Start Quiz</button>
+                </div>
+            </section>
 
-            <p style="font-size: 0.9em; color: gray;">Powered by Google AI</p>
+            <!-- Screen 2: Quiz Area -->
+            <section id="quiz-area" class="app-screen">
+                <header class="app-header quiz-header">
+                    <h2 id="quiz-title">Botany</h2>
+                    <div class="timer">
+                        <i class="fas fa-clock"></i>
+                        <span id="time-display">00:00</span>
+                    </div>
+                </header>
+                <div class="screen-content">
+                    <h3 id="current-question-number">Question 1 / 10</h3>
+                    <p id="question-text">What is the powerhouse of the cell?</p>
+                    <div id="options-container">
+                        <!-- Option buttons will be generated here -->
+                    </div>
+                    <button id="next-question-btn" class="btn btn-primary">Next</button>
+                    <button id="submit-quiz-btn" class="btn btn-primary" style="display:none;">Submit</button>
+                </div>
+            </section>
 
-            <button id="start-quiz-btn" disabled>Start Quiz</button>
+            <!-- Screen 3: Result Area -->
+            <section id="result-area" class="app-screen">
+                 <header class="app-header">
+                    <h2>Results</h2>
+                </header>
+                <div class="screen-content result-content">
+                    <div class="result-card">
+                        <img src="https://i.imgur.com/g8921El.png" alt="Trophy" class="trophy-icon">
+                        <h2 id="congrats-message">Congratulations!</h2>
+                        <p id="score-display" class="score-text">90%</p>
+                        <p id="score-summary">You answered 9 out of 10 questions correctly.</p>
+                        <div class="share-options">
+                            <span>Share with us:</span>
+                            <i class="fab fa-facebook"></i>
+                            <i class="fab fa-whatsapp"></i>
+                            <i class="fab fa-instagram"></i>
+                        </div>
+                    </div>
+                     <h3>Detailed Analysis</h3>
+                    <div id="detailed-results">
+                        <!-- Detailed results will be shown here -->
+                    </div>
+                    <button id="restart-quiz-btn" class="btn btn-secondary">Start New Quiz</button>
+                </div>
+            </section>
         </main>
 
-        <section id="quiz-area" style="display:none;">
-            <h2 id="current-question-number">Question 1</h2>
-            <p id="question-text"></p>
-            <div id="options-container"></div>
-            <button id="next-question-btn">Next Question</button>
-            <button id="submit-quiz-btn" style="display:none;">Submit Quiz</button>
-        </section>
-
-        <section id="result-area" style="display:none;">
-            <h2>Quiz Results</h2>
-            <p id="score-display"></p>
-            <h3>Detailed Analysis:</h3>
-            <div id="detailed-results"></div>
-            <button id="restart-quiz-btn">Start New Quiz</button>
-        </section>
-
-        <footer>
-            <p>© 2025 VIPQuizs | Free NEET Practice Platform</p>
-            <p><a href="https://vipquizs.in/sitemap.xml">Sitemap</a> | <a href="https://vipquizs.in/robots.txt">Robots.txt</a></p>
-        </footer>
+        <!-- Loading Spinner Overlay -->
+        <div id="loader" class="loader-overlay">
+            <div class="spinner"></div>
+            <p id="loader-text">Generating Your Quiz...</p>
+        </div>
     </div>
 
     <script src="script.js"></script>
