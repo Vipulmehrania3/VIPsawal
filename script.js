@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleHindiBtn = document.getElementById('toggle-hindi-btn');
 
     const quizTitle = document.getElementById('quiz-title');
+    const exitQuizBtn = document.getElementById('exit-quiz-btn'); // New exit button
     const currentQuestionNumber = document.getElementById('current-question-number');
     const questionText = document.getElementById('question-text');
     const optionsContainer = document.getElementById('options-container');
@@ -64,6 +65,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function hideLoader() {
         loader.classList.remove('active');
+    }
+
+    // NEW function to reset the quiz state
+    function resetQuizState() {
+        // Reset variables
+        currentQuiz = [];
+        currentQuestionIndex = 0;
+        userAnswers = [];
+
+        // Reset UI elements on the setup screen
+        stylePromptInput.value = '';
+        subjectSelect.value = '';
+        populateChapterSelect(); // This will reset and disable the chapter dropdown
+        
+        showScreen(quizSetupScreen);
     }
 
     // --- SETUP & LANGUAGE ---
@@ -125,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const questionLimit = parseInt(questionLimitInput.value);
         const stylePrompt = stylePromptInput.value.trim();
 
-        // --- NEW: In-button loading logic ---
         startQuizBtn.disabled = true;
         startQuizBtn.classList.add('loading');
         const loadingText = currentLanguage === 'hindi' ? 'बनाया जा रहा है...' : 'Generating...';
@@ -166,10 +181,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const errorMessage = (currentLanguage === 'hindi') ? `क्विज़ उत्पन्न करने में विफल: ${error.message}।` : `Failed to generate quiz: ${error.message}.`;
             alert(errorMessage);
         } finally {
-            // --- NEW: Reset button in the finally block ---
             startQuizBtn.classList.remove('loading');
             startQuizBtn.innerHTML = currentLanguage === 'hindi' ? 'क्विज़ प्रारंभ करें' : 'Start Quiz';
             updateStartButtonState();
+        }
+    });
+    
+    // NEW event listener for the exit button
+    exitQuizBtn.addEventListener('click', () => {
+        const exitMessage = currentLanguage === 'hindi' ? 'क्या आप वाकई बाहर निकलना चाहते हैं? आपकी प्रगति खो जाएगी।' : 'Are you sure you want to exit? Your progress will be lost.';
+        if (confirm(exitMessage)) {
+            resetQuizState();
         }
     });
 
@@ -199,8 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
         questionStartTime = Date.now();
     }
     
-    // The rest of the functions (recordAnswer, handleNextOrSubmit, etc.) are the same.
-    // ...
     function recordAnswer() {
         userAnswers.push({
             questionId: currentQuiz[currentQuestionIndex].id,
@@ -277,10 +297,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    restartQuizBtn.addEventListener('click', () => {
-        stylePromptInput.value = '';
-        showScreen(quizSetupScreen);
-    });
+    // UPDATED to call the new reset function
+    restartQuizBtn.addEventListener('click', resetQuizState);
 
     // --- INITIALIZE APP ---
     updateLanguageDisplay();
