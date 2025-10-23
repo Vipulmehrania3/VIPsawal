@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const chaptersHindi = {
         physics: ["भौतिकी और मापन", "गतिकी", "गति के नियम", "कार्य, ऊर्जा और शक्ति", "घूर्णी गति", "गुरुत्वाकर्षण", "ठोस और तरल पदार्थों के गुण", "ऊष्मप्रवैगिकी", "गैसों का अणुगति सिद्धांत", "दोलन और तरंगें", "स्थिरवैद्युतिकी", "विद्युत धारा", "धारा और चुंबकत्व के चुंबकीय प्रभाव", "विद्युत चुंबकीय प्रेरण और प्रत्यावर्ती धाराएं", "विद्युत चुम्बकीय तरंगें", "प्रकाशिकी", "द्रव्य और विकिरण की द्वैत प्रकृति", "परमाणु और नाभिक", "इलेक्ट्रॉनिक उपकरण", "प्रायोगिक कौशल"],
-        chemistry: ["रसायन विज्ञान की कुछ मूल अवधारणाएँ", "परमाणु संरचना", "रासायनिक आबंधन और आणविक संरचना", "रासायनिक ऊष्मप्रवैगिकी", "विलयन", "साम्यावस्था", "अपचयोपचय अभिक्रियाएँ और वैद्युतरसायन", "रासायनिक गतिकी", "तत्वों का वर्गीकरण और गुणधर्मों में आवर्तिता", "p-ब्लॉक के तत्व", "d- और f-ब्लॉक के तत्व", "उपसहसंयोजन यौगिक", "कार्बनिक यौगिकों का शोधन और अभिलक्षणन", "कार्बनिक रसायन के कुछ मूल सिद्धांत", "हाइड्रोकार्बन", "हैलोजन युक्त कार्बनिक यौगिक", "ऑक्सीजन युक्त कार्बनिक यौगिक", "नाइट्रोजन युक्त कार्बनिक यौगिक", "जैव अणु", "प्रायोगिक रसायन से संबंधित सिद्धांत"],
+        chemistry: ["रसायन विज्ञान की कुछ मूल अवधारणाएँ", "परमाणु संरचना", "रासायनिक आबंधन और आणविक संरचना", "रासायनिक ऊष्मप्रवैगिकी", "विलयन", "साम्यावस्था", "अपचयोपचय अभिक्रियाएँ और वैद्युतरसायन", "रासायनिक गतिकी", "तत्वों का वर्गीकरण और गुणधर्मों में आवर्तिता", "p-ब्लॉक के तत्व", "d- और f-ब्लॉक के तत्व", "उपसहसंयोजन यौगिक", "कार्बनिक यौगिकों का शोधन और अभिलक्षणन", "कार्बनिक रसायन के कुछ मूल सिद्धांत", "हाइड्रोकार्बन", "हैलोजन युक्त कार्बनिक यौगिक", "ऑक्सीजन युक्त कार्बनिक यौगिक", "नाइट्रो जन युक्त कार्बनिक यौगिक", "जैव अणु", "प्रायोगिक रसायन से संबंधित सिद्धांत"],
         botany: ["जीव जगत", "जीव जगत का वर्गीकरण", "वनस्पति जगत", "पुष्पी पादपों की आकारिकी", "पुष्पी पादपों का शारीर", "कोशिका: जीवन की इकाई", "कोशिका चक्र और कोशिका विभाजन", "उच्च पादपों में प्रकाश संश्लेषण", "पादपों में श्वसन", "पादप वृद्धि एवं परिवर्धन", "पौधों में परिवहन", "खनिज पोषण", "पुष्पी पादपों में लैंगिक जनन", "वंशागति तथा विविधता के सिद्धांत", "वंशागति का आणविक आधार", "विकास", "मानव कल्याण में सूक्ष्मजीव", "जैव प्रौद्योगिकी - सिद्धांत व प्रक्रम", "जैव प्रौद्योगिकी एवं उसके उपयोग", "जीव और समष्टियाँ", "पारितंत्र", "जैव विविधता एवं संरक्षण", "पर्यावरण के मुद्दे"],
         zoology: ["प्राणि जगत", "प्राणियों में संरचनात्मक संगठन", "पाचन एवं अवशोषण", "श्वसन और गैसों का विनिमय", "शरीर द्रव तथा परिसंचरण", "उत्सर्जी उत्पाद एवं उनका निष्कासन", "गमन एवं संचलन", "तंत्रिकीय नियंत्रण एवं समन्वय", "रासायनिक समन्वय तथा एकीकरण", "जैव अणु", "मानव जनन", "जनन स्वास्थ्य", "आनुवंशिकी तथा विकास", "मानव स्वास्थ्य तथा रोग", "प्रतिरक्षा विज्ञान (मानव स्वास्थ्य तथा रोग का हिस्सा)"]
     };
@@ -53,13 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CORE FUNCTIONS ---
 
     function showScreen(screenToShow) {
-        screens.forEach(screen => {
-            screen.classList.remove('active');
-        });
+        screens.forEach(screen => screen.classList.remove('active'));
         screenToShow.classList.add('active');
     }
 
-    function showLoader(text) {
+    function showLoader(text) { // This is now only for results analysis
         document.getElementById('loader-text').textContent = text;
         loader.classList.add('active');
     }
@@ -78,31 +76,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function updateLanguageDisplay() {
-        if (currentLanguage === 'hindi') {
-            document.body.classList.add('hindi-medium');
-            toggleHindiBtn.textContent = 'Switch to English Medium';
-            document.querySelector('h1').textContent = 'वीआईपीक्विज़';
-            document.title = 'वीआईपीक्विज़';
-            document.querySelector('label[for="subject-select"]').textContent = 'विषय चुनें';
-            document.querySelector('label[for="chapter-select"]').textContent = 'अध्याय चुनें';
-            document.querySelector('label[for="question-limit"]').textContent = 'प्रश्न';
-            document.querySelector('label[for="style-prompt"]').textContent = 'प्रश्न शैली (वैकल्पिक)';
-        } else {
-            document.body.classList.remove('hindi-medium');
-            toggleHindiBtn.textContent = 'Switch to Hindi Medium';
-            document.querySelector('h1').textContent = 'VIPQuizs';
-            document.title = 'VIPQuizs';
-            document.querySelector('label[for="subject-select"]').textContent = 'Select Subject';
-            document.querySelector('label[for="chapter-select"]').textContent = 'Select Chapter';
-            document.querySelector('label[for="question-limit"]').textContent = 'Questions';
-            document.querySelector('label[for="style-prompt"]').textContent = 'Question Style (Optional)';
-        }
-        updateStartButtonState();
+        const isHindi = currentLanguage === 'hindi';
+        document.body.classList.toggle('hindi-medium', isHindi);
+        toggleHindiBtn.textContent = isHindi ? 'Switch to English Medium' : 'Switch to Hindi Medium';
+        document.querySelector('h1').textContent = isHindi ? 'वीआईपीक्विज़' : 'VIPQuizs';
+        document.title = isHindi ? 'वीआईपीक्विज़' : 'VIPQuizs';
+        document.querySelector('label[for="subject-select"]').textContent = isHindi ? 'विषय चुनें' : 'Select Subject';
+        document.querySelector('label[for="chapter-select"]').textContent = isHindi ? 'अध्याय चुनें' : 'Select Chapter';
+        document.querySelector('label[for="question-limit"]').textContent = isHindi ? 'प्रश्न' : 'Questions';
+        document.querySelector('label[for="style-prompt"]').textContent = isHindi ? 'प्रश्न शैली (वैकल्पिक)' : 'Question Style (Optional)';
+        startQuizBtn.innerHTML = isHindi ? 'क्विज़ प्रारंभ करें' : 'Start Quiz';
     }
     
     function populateChapterSelect() {
         const selectedSubject = subjectSelect.value;
-        chapterSelect.innerHTML = '<option value="">-- Choose Chapter --</option>';
+        chapterSelect.innerHTML = `<option value="">-- ${(currentLanguage === 'hindi' ? 'अध्याय चुनें' : 'Choose Chapter')} --</option>`;
         chapterSelect.disabled = true;
         const currentChaptersList = (currentLanguage === 'hindi') ? chaptersHindi : chaptersEnglish;
         if (selectedSubject && currentChaptersList[selectedSubject]) {
@@ -137,7 +125,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const questionLimit = parseInt(questionLimitInput.value);
         const stylePrompt = stylePromptInput.value.trim();
 
-        showLoader((currentLanguage === 'hindi') ? 'आपका क्विज़ बन रहा है...' : 'Generating Your Quiz...');
+        // --- NEW: In-button loading logic ---
+        startQuizBtn.disabled = true;
+        startQuizBtn.classList.add('loading');
+        const loadingText = currentLanguage === 'hindi' ? 'बनाया जा रहा है...' : 'Generating...';
+        startQuizBtn.innerHTML = `<div class="spinner-icon"></div><span class="loading-text">${loadingText}</span>`;
 
         try {
             const response = await fetch(`${backendUrl}/generate_quiz`, {
@@ -171,15 +163,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Error generating quiz:", error);
-            const errorMessage = (currentLanguage === 'hindi') ? `क्विज़ उत्पन्न करने में विफल: ${error.message}। कृपया सुनिश्चित करें कि बैकएंड सर्वर चल रहा है।` : `Failed to generate quiz: ${error.message}. Please ensure the backend server is running.`;
+            const errorMessage = (currentLanguage === 'hindi') ? `क्विज़ उत्पन्न करने में विफल: ${error.message}।` : `Failed to generate quiz: ${error.message}.`;
             alert(errorMessage);
         } finally {
-            hideLoader();
+            // --- NEW: Reset button in the finally block ---
+            startQuizBtn.classList.remove('loading');
+            startQuizBtn.innerHTML = currentLanguage === 'hindi' ? 'क्विज़ प्रारंभ करें' : 'Start Quiz';
+            updateStartButtonState();
         }
     });
 
     function displayQuestion(index) {
-        selectedOptionValue = null; // Reset selection for new question
+        selectedOptionValue = null;
         const question = currentQuiz[index];
         currentQuestionNumber.textContent = `${(currentLanguage === 'hindi' ? 'प्रश्न' : 'Question')} ${index + 1} / ${currentQuiz.length}`;
         questionText.innerHTML = question.question;
@@ -191,10 +186,8 @@ document.addEventListener('DOMContentLoaded', () => {
             button.className = 'option-btn';
             button.innerHTML = optionText;
             button.addEventListener('click', () => {
-                // Remove 'selected' from any previously selected button
                 const allOptions = optionsContainer.querySelectorAll('.option-btn');
                 allOptions.forEach(btn => btn.classList.remove('selected'));
-                // Add 'selected' to the clicked button
                 button.classList.add('selected');
                 selectedOptionValue = button.innerHTML;
             });
@@ -205,7 +198,9 @@ document.addEventListener('DOMContentLoaded', () => {
         submitQuizBtn.style.display = (index === currentQuiz.length - 1) ? 'block' : 'none';
         questionStartTime = Date.now();
     }
-
+    
+    // The rest of the functions (recordAnswer, handleNextOrSubmit, etc.) are the same.
+    // ...
     function recordAnswer() {
         userAnswers.push({
             questionId: currentQuiz[currentQuestionIndex].id,
@@ -233,10 +228,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     nextQuestionBtn.addEventListener('click', handleNextOrSubmit);
     submitQuizBtn.addEventListener('click', handleNextOrSubmit);
-
+    
     async function submitQuiz() {
         showScreen(resultAreaScreen);
-        detailedResultsDiv.innerHTML = ''; // Clear previous results
+        detailedResultsDiv.innerHTML = '';
         
         showLoader((currentLanguage === 'hindi') ? 'परिणामों का विश्लेषण किया जा रहा है...' : 'Analyzing Results...');
         
@@ -266,17 +261,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isCorrect = answer.selectedAnswer === answer.correctAnswer;
                 const resultItem = document.createElement('div');
                 resultItem.classList.add('result-item');
-                resultItem.innerHTML = `
-                    <h4>${(currentLanguage === 'hindi' ? 'प्रश्न' : 'Question')} ${index + 1}: ${answer.questionText}</h4>
-                    <p>${(currentLanguage === 'hindi' ? 'आपका उत्तर' : 'Your Answer')}: <span class="${isCorrect ? 'correct-answer' : 'wrong-answer'}">${answer.selectedAnswer || (currentLanguage === 'hindi' ? 'उत्तर नहीं दिया' : 'Not Answered')}</span></p>
-                    <p>${(currentLanguage === 'hindi' ? 'सही उत्तर' : 'Correct Answer')}: <span class="correct-answer">${answer.correctAnswer}</span></p>
-                    ${!isCorrect ? `<p><strong>${(currentLanguage === 'hindi' ? 'AI समाधान' : 'AI Solution')}:</strong> ${answer.solution || ''}</p>` : ''}`;
+                resultItem.innerHTML = `<h4>${(currentLanguage === 'hindi' ? 'प्रश्न' : 'Question')} ${index + 1}: ${answer.questionText}</h4><p>${(currentLanguage === 'hindi' ? 'आपका उत्तर' : 'Your Answer')}: <span class="${isCorrect ? 'correct-answer' : 'wrong-answer'}">${answer.selectedAnswer || (currentLanguage === 'hindi' ? 'उत्तर नहीं दिया' : 'Not Answered')}</span></p><p>${(currentLanguage === 'hindi' ? 'सही उत्तर' : 'Correct Answer')}: <span class="correct-answer">${answer.correctAnswer}</span></p>${!isCorrect ? `<p><strong>${(currentLanguage === 'hindi' ? 'AI समाधान' : 'AI Solution')}:</strong> ${answer.solution || ''}</p>` : ''}`;
                 detailedResultsDiv.appendChild(resultItem);
             });
 
         } catch (error) {
             console.error("Error fetching detailed analysis:", error);
-            // Fallback display if AI analysis fails
             let score = 0;
             userAnswers.forEach(answer => { if (answer.selectedAnswer === answer.correctAnswer) score++; });
             let scorePercentage = Math.round((score / currentQuiz.length) * 100);
