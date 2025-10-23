@@ -37,7 +37,7 @@ body {
     max-height: 850px;
     background-color: var(--primary-bg);
     border-radius: 40px;
-    border: 8px solid #111;
+    /* border: 8px solid #111; BORDER REMOVED */
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     position: relative;
     overflow: hidden;
@@ -85,6 +85,17 @@ body {
 .app-header i { font-size: 1.5rem; cursor: pointer; }
 .quiz-header h2 { font-size: 1.2rem; }
 
+/* NEW Styling for the exit icon */
+.exit-icon {
+    font-size: 1.6rem !important;
+    color: var(--text-medium);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.exit-icon:hover {
+    color: var(--text-light);
+    transform: scale(1.1);
+}
+
 /* --- BUTTONS & INTERACTIVE ELEMENTS --- */
 .btn {
     width: 100%;
@@ -103,14 +114,13 @@ body {
     align-items: center;
 }
 
-/* NEW: Enhanced Start Button */
+/* Enhanced Start Button */
 .btn-primary {
-    padding: 1.2rem; /* Larger */
+    padding: 1.2rem;
     font-size: 1.2rem;
     font-weight: 700;
     color: #fff;
     background-color: var(--accent-orange);
-    /* New gradient and texture */
     background-image:
         radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0, rgba(255, 255, 255, 0) 70%),
         linear-gradient(45deg, var(--accent-orange), #FFB700);
@@ -184,11 +194,10 @@ textarea { resize: vertical; }
 .correct-answer { color: var(--correct-green); font-weight: bold; }
 .wrong-answer { color: var(--incorrect-red); font-weight: bold; }
 
-/* --- NEW: IN-BUTTON LOADER --- */
+/* --- IN-BUTTON LOADER --- */
 .btn-primary.loading {
     cursor: wait;
     background: var(--secondary-bg);
-    color: var(--text-medium);
 }
 .btn-primary.loading::before {
     content: '';
@@ -199,7 +208,7 @@ textarea { resize: vertical; }
     height: 100%;
     background-color: rgba(255, 140, 0, 0.3);
     border-radius: 12px;
-    animation: fill-progress 15s linear forwards; /* Simulate progress over 15s */
+    animation: fill-progress 15s linear forwards;
 }
 @keyframes fill-progress {
     from { width: 0%; }
