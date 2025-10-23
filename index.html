@@ -67,6 +67,8 @@
             <section id="quiz-area" class="app-screen">
                 <header class="app-header quiz-header">
                     <h2 id="quiz-title">Botany</h2>
+                    <!-- Added Exit Button -->
+                    <i id="exit-quiz-btn" class="fas fa-times exit-icon"></i>
                 </header>
                 <div class="screen-content">
                     <h3 id="current-question-number">Question 1 / 10</h3>
@@ -87,7 +89,7 @@
                 <div class="screen-content result-content">
                     <div class="result-card">
                         <img src="https://i.imgur.com/g8921El.png" alt="Trophy" class="trophy-icon">
-                        <h2 id="congrats-message">Congratulations!</h2>
+                        <!-- "Congratulations!" message removed -->
                         <p id="score-display" class="score-text">90%</p>
                         <p id="score-summary">You answered 9 out of 10 questions correctly.</p>
                         <div class="share-options">
@@ -106,7 +108,7 @@
             </section>
         </main>
 
-        <!-- Fullscreen Loader (now only for analyzing results) -->
+        <!-- Fullscreen Loader (for analyzing results) -->
         <div id="loader" class="loader-overlay">
             <div class="spinner"></div>
             <p id="loader-text">Analyzing Results...</p>
