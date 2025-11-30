@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>VIPQuizs</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,118 +11,162 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="mobile-container">
-        <main class="app-main">
-
-            <!-- Screen 1: Subject Selection -->
-            <section id="subject-screen" class="app-screen initial active">
-                <header class="app-header"><h1>VIPQuizs</h1></header>
-                <div class="screen-content">
-                    <h2>Select a Subject</h2>
-                    <div class="subject-grid">
-                        <div class="subject-card" data-subject="physics"><i class="fas fa-atom"></i><span>Physics</span></div>
-                        <div class="subject-card" data-subject="chemistry"><i class="fas fa-flask"></i><span>Chemistry</span></div>
-                        <div class="subject-card" data-subject="botany"><i class="fas fa-leaf"></i><span>Botany</span></div>
-                        <div class="subject-card" data-subject="zoology"><i class="fas fa-hippo"></i><span>Zoology</span></div>
-                    </div>
-                    <button id="ask-doubt-btn" class="btn btn-secondary"><i class="fas fa-question-circle"></i> Ask a Doubt</button>
-                </div>
-            </section>
-
-            <!-- Screen 2: Chapter Selection -->
-            <section id="chapter-screen" class="app-screen">
-                <header class="app-header">
-                    <button class="back-btn" data-target="subject-screen"><i class="fas fa-arrow-left"></i></button>
-                    <h2 id="chapter-title">Select Chapters</h2>
-                </header>
-                <div id="chapter-list" class="screen-content chapter-list"></div>
-                <div class="footer-action">
-                    <button id="chapter-next-btn" class="btn btn-primary" disabled>Next</button>
-                </div>
-            </section>
-
-            <!-- Screen 3: Settings Screen -->
-            <section id="settings-screen" class="app-screen">
-                <header class="app-header">
-                    <button class="back-btn" data-target="chapter-screen"><i class="fas fa-arrow-left"></i></button>
-                    <h2>Settings</h2>
-                </header>
-                <div class="screen-content settings-content"> <!-- New class for Flexbox -->
-                    <div class="input-group">
-                        <label for="question-limit">Number of Questions</label>
-                        <input type="number" id="question-limit" value="10" min="1" max="50">
-                    </div>
-                    <div class="input-group">
-                        <label for="style-prompt">Question Style (Optional)</label>
-                        <textarea id="style-prompt" rows="4" placeholder="e.g., assertion-reason, PYQs from 2022..."></textarea>
-                    </div>
-                </div>
-                <div class="footer-action">
-                     <button id="generate-quiz-btn" class="btn btn-primary">Generate Quiz</button>
-                </div>
-            </section>
+    <div class="mobile-frame">
+        <main class="app-container">
             
-            <!-- Screen 4: Quiz Area -->
-            <section id="quiz-area" class="app-screen">
-                <header class="app-header quiz-header">
-                    <h2 id="quiz-title">Quiz in Progress</h2>
-                    <i id="exit-quiz-btn" class="fas fa-times exit-icon"></i>
+            <!-- 1. Start Screen -->
+            <section id="screen-start" class="screen active">
+                <header class="header-simple">
+                    <h1>VIPQuizs</h1>
+                    <p class="subtitle">NEET Exam Prep</p>
                 </header>
-                <div class="screen-content">
-                    <div class="progress-bar-container"><div id="progress-bar"></div></div>
-                    <h3 id="current-question-number">Question 1 / 10</h3>
-                    <p id="question-text"></p>
-                    <div id="options-container"></div>
-                    <div class="quiz-navigation">
-                        <button id="prev-question-btn" class="btn btn-secondary"><i class="fas fa-chevron-left"></i> Previous</button>
-                        <button id="next-question-btn" class="btn btn-primary">Next <i class="fas fa-chevron-right"></i></button>
+                
+                <div class="content-center">
+                    <div class="lang-switch-wrapper">
+                        <span id="lang-label">English</span>
+                        <label class="switch">
+                            <input type="checkbox" id="language-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                        <span id="lang-label-hi">हिंदी</span>
                     </div>
-                     <button id="submit-quiz-btn" class="btn btn-primary" style="display:none;">Submit Quiz</button>
+
+                    <h2 id="txt-select-subject">Select Subject</h2>
+                    <div class="subject-grid">
+                        <div class="subject-card" data-subject="physics">
+                            <i class="fas fa-atom"></i> <span class="sub-name">Physics</span>
+                        </div>
+                        <div class="subject-card" data-subject="chemistry">
+                            <i class="fas fa-flask"></i> <span class="sub-name">Chemistry</span>
+                        </div>
+                        <div class="subject-card" data-subject="botany">
+                            <i class="fas fa-leaf"></i> <span class="sub-name">Botany</span>
+                        </div>
+                        <div class="subject-card" data-subject="zoology">
+                            <i class="fas fa-dna"></i> <span class="sub-name">Zoology</span>
+                        </div>
+                    </div>
+
+                    <button id="btn-goto-chat" class="btn btn-secondary">
+                        <i class="fas fa-robot"></i> <span id="txt-chat-btn">Chat with vipAI</span>
+                    </button>
                 </div>
             </section>
 
-            <!-- Screen 5: Result Area -->
-            <section id="result-area" class="app-screen">
-                 <header class="app-header"><h2>Results</h2></header>
-                 <div class="screen-content result-content">
-                    <div class="result-summary-card">
-                        <div class="score-circle"><span id="score-display">90%</span></div>
-                        <p id="score-summary"></p>
-                    </div>
-                    <h3>Detailed Review</h3>
-                    <div id="detailed-results"></div>
-                    <button id="restart-quiz-btn" class="btn btn-secondary">Start New Quiz</button>
-                 </div>
+            <!-- 2. Chapter Selection -->
+            <section id="screen-chapters" class="screen next">
+                <header class="header-nav">
+                    <i class="fas fa-arrow-left back-btn"></i>
+                    <h2 id="header-chapters">Chapters</h2>
+                </header>
+                <div class="content-scroll">
+                    <p id="txt-select-multiple" class="hint-text">Select one or more chapters</p>
+                    <div id="chapter-list"></div>
+                </div>
+                <div class="footer-fixed">
+                    <button id="btn-confirm-chapters" class="btn btn-primary" disabled>Next</button>
+                </div>
             </section>
 
-            <!-- Screen 6: Doubt Screen -->
-            <section id="doubt-screen" class="app-screen">
-                <header class="app-header">
-                    <button class="back-btn" data-target="subject-screen"><i class="fas fa-arrow-left"></i></button>
-                    <h2>Ask a Doubt</h2>
+            <!-- 3. Settings -->
+            <section id="screen-settings" class="screen next">
+                <header class="header-nav">
+                    <i class="fas fa-arrow-left back-btn"></i>
+                    <h2 id="header-settings">Customize Quiz</h2>
                 </header>
-                <div class="screen-content">
-                    <div class="input-group">
-                        <label for="doubt-prompt">Ask your question</label>
-                        <textarea id="doubt-prompt" rows="4" placeholder="Type your doubt here, or explain your image..."></textarea>
+                <div class="content-scroll">
+                    <div class="setting-group">
+                        <label id="lbl-questions">Number of Questions</label>
+                        <div class="number-control">
+                            <button class="num-btn" id="num-decrease">-</button>
+                            <input type="number" id="question-limit" value="10" readonly>
+                            <button class="num-btn" id="num-increase">+</button>
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <label for="doubt-image-upload">Upload an Image</label>
-                        <input type="file" id="doubt-image-upload" accept="image/*">
-                        <img id="image-preview" src="#" alt="Image Preview" class="hidden"/>
+                    <div class="setting-group">
+                        <label id="lbl-prompt">Style Prompt (Optional)</label>
+                        <textarea id="style-prompt" rows="4" placeholder="e.g. Only Assertion-Reason questions..."></textarea>
                     </div>
                 </div>
-                <div class="footer-action">
-                    <button id="submit-doubt-btn" class="btn btn-primary">Get Solution</button>
+                <div class="footer-fixed">
+                    <button id="btn-generate" class="btn btn-primary">Generate Quiz</button>
+                </div>
+            </section>
+
+            <!-- 4. Quiz Interface -->
+            <section id="screen-quiz" class="screen next">
+                <header class="header-nav">
+                    <h2 id="quiz-subject-title">Physics</h2>
+                    <i id="btn-exit-quiz" class="fas fa-times"></i>
+                </header>
+                <div class="progress-bar-wrapper">
+                    <div id="progress-bar"></div>
+                </div>
+                <div class="content-scroll" id="quiz-content-area">
+                    <!-- Questions injected here -->
+                    <div class="question-wrapper">
+                        <span class="q-badge" id="q-number">Q1</span>
+                        <div id="q-text" class="q-text"></div>
+                    </div>
+                    <div id="options-list" class="options-list"></div>
+                </div>
+                <!-- Navigation Hints -->
+                <div class="swipe-hint">
+                    <span><i class="fas fa-chevron-left"></i> Prev</span>
+                    <span>Swipe</span>
+                    <span>Next <i class="fas fa-chevron-right"></i></span>
+                </div>
+                <div class="footer-fixed quiz-footer">
+                    <button id="btn-submit-quiz" class="btn btn-success" style="display:none;">Submit Quiz</button>
+                </div>
+            </section>
+
+            <!-- 5. Results -->
+            <section id="screen-result" class="screen next">
+                <header class="header-nav">
+                    <h2>Result Analysis</h2>
+                </header>
+                <div class="content-scroll">
+                    <div class="score-card">
+                        <div class="score-ring">
+                            <span id="score-text">0%</span>
+                        </div>
+                        <p id="score-msg">Keep Practicing!</p>
+                    </div>
+                    <h3 id="txt-detailed-sol">Detailed Solutions</h3>
+                    <div id="results-list"></div>
+                </div>
+                <div class="footer-fixed">
+                    <button id="btn-home" class="btn btn-secondary">Go Home</button>
+                </div>
+            </section>
+
+            <!-- 6. Chat with vipAI -->
+            <section id="screen-chat" class="screen next">
+                <header class="header-nav">
+                    <i class="fas fa-arrow-left back-btn"></i>
+                    <h2>vipAI Chat</h2>
+                </header>
+                <div id="chat-history" class="content-scroll chat-area">
+                    <div class="chat-msg bot">
+                        Hello! I am vipAI. Ask me anything about NEET concepts.
+                    </div>
+                </div>
+                <div class="footer-fixed chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Type your question...">
+                    <button id="btn-send-chat"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </section>
 
         </main>
-        <div id="loader" class="loader-overlay">
+
+        <!-- Loader -->
+        <div id="loader" class="loader hidden">
             <div class="spinner"></div>
-            <p id="loader-text">Loading...</p>
+            <p id="loader-text">Generating...</p>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
