@@ -2,26 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VIPQuizs</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="mobile-frame">
+        
+        <!-- NEW: Constant Branding Bar -->
+        <div class="global-top-bar">
+            <span class="brand-text">VIPquiz</span>
+        </div>
+
         <main class="app-container">
             
             <!-- 1. Start Screen -->
             <section id="screen-start" class="screen active">
-                <header class="header-simple">
-                    <h1>VIPQuizs</h1>
-                    <p class="subtitle">NEET Exam Prep</p>
-                </header>
-                
-                <div class="content-center">
+                <!-- Sub-header removed since we have global branding -->
+                <div class="content-center" style="padding-top: 1rem;">
+                    <p class="subtitle">Master NEET with AI</p>
+                    
                     <div class="lang-switch-wrapper">
                         <span id="lang-label">English</span>
                         <label class="switch">
@@ -72,7 +76,7 @@
             <section id="screen-settings" class="screen next">
                 <header class="header-nav">
                     <i class="fas fa-arrow-left back-btn"></i>
-                    <h2 id="header-settings">Customize Quiz</h2>
+                    <h2 id="header-settings">Customize</h2>
                 </header>
                 <div class="content-scroll">
                     <div class="setting-group">
@@ -103,14 +107,12 @@
                     <div id="progress-bar"></div>
                 </div>
                 <div class="content-scroll" id="quiz-content-area">
-                    <!-- Questions injected here -->
                     <div class="question-wrapper">
                         <span class="q-badge" id="q-number">Q1</span>
                         <div id="q-text" class="q-text"></div>
                     </div>
                     <div id="options-list" class="options-list"></div>
                 </div>
-                <!-- Navigation Hints -->
                 <div class="swipe-hint">
                     <span><i class="fas fa-chevron-left"></i> Prev</span>
                     <span>Swipe</span>
