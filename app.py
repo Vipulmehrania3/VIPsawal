@@ -13,19 +13,19 @@ try:
     genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 except KeyError:
     print("WARNING: GOOGLE_API_KEY env var not found. Using hardcoded key for local testing.")
-    GOOGLE_API_KEY = "AIzaSyAbDRav7Kj6yRVBEJMFaUPz_SbKDe6weoM" # Your provided API key
+    # REPLACE THIS WITH YOUR ACTUAL API KEY IF RUNNING LOCALLY
+    GOOGLE_API_KEY = "AIzaSyAbDRav7Kj6yRVBEJMFaUPz_SbKDe6weoM" 
     genai.configure(api_key=GOOGLE_API_KEY)
 
+# Using Gemini 1.5 Flash for speed and efficiency
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 # --- Helper Functions ---
 def parse_quiz_response(text_response):
     questions = []
-    # Robust regex to find questions
     question_blocks = re.findall(r'##\s*(?:Question|प्रश्न)\s*\d+:\s*(.*?)(?=##\s*(?:Question|प्रश्न)|$)', text_response, re.DOTALL | re.IGNORECASE)
     
     for block in question_blocks:
-        # Regex to extract parts
         parts = {
             'question': re.search(r'^(.*?)(?:Options:|विकल्प:)', block, re.DOTALL | re.IGNORECASE),
             'options': re.search(r'(?:Options:|विकल्प:)(.*?)(?:Correct Answer:|सही उत्तर:)', block, re.DOTALL | re.IGNORECASE),
@@ -36,12 +36,9 @@ def parse_quiz_response(text_response):
         if all(parts.values()):
             options_raw = parts['options'].group(1).strip().split('\n')
             options_list = [opt.strip() for opt in options_raw if opt.strip()]
-            
-            # Cleaning options (removing A. B. etc)
             cleaned_options = [re.sub(r'^[A-D]\.\s*', '', opt, flags=re.IGNORECASE).strip() for opt in options_list]
             cleaned_correct = re.sub(r'^[A-D]\.\s*', '', parts['correctAnswer'].group(1).strip(), flags=re.IGNORECASE).strip()
             
-            # Ensure we have 4 options
             if len(cleaned_options) >= 4:
                 questions.append({
                     "question": parts['question'].group(1).strip(),
@@ -102,6 +99,7 @@ def generate_quiz():
 
 @app.route('/chat_with_vipai', methods=['POST'])
 def chat_with_vipai():
+    # 1. Get data from Frontend
     data = request.json
     user_message = data.get('message')
     language = data.get('language', 'english')
@@ -109,37 +107,38 @@ def chat_with_vipai():
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
 
+    # 2. Prepare Context for AI
     lang_context = "Reply in Hindi." if language == 'hindi' else "Reply in English."
     
     prompt = f"""
-    You are 'vipAI', a friendly and expert AI tutor for NEET aspirants. 
-    User Question: {user_message}
+    You are 'vipAI', a smart and encouraging AI tutor specifically for NEET (Medical Entrance) aspirants.
+    
+    User's Question: "{user_message}"
     
     Instructions:
-    1. Provide a clear, concise answer based on NCERT concepts.
-    2. Be encouraging.
+    1. Answer the question clearly using NCERT concepts.
+    2. Keep the explanation concise and easy to understand.
     3. {lang_context}
-    4. If there are formulas, use simple LaTeX (e.g., $x^2$).
+    4. If using formulas, use simple LaTeX like $x^2$ or $H_2O$.
     """
 
+    # 3. Call Gemini AI
     try:
         response = model.generate_content(prompt)
         return jsonify({"reply": response.text})
     except Exception as e:
+        print(f"Chat Error: {e}") # Log error to Render console
         return jsonify({"error": str(e)}), 500
 
 @app.route('/analyze_results', methods=['POST'])
 def analyze_results():
-    # Simplified endpoint just to return score, as frontend handles detailed view
     data = request.json
     quiz = data.get('quiz', [])
     user_answers = data.get('userAnswers', [])
-    
     score = 0
     for i, ans in enumerate(user_answers):
         if ans and ans.get('selectedAnswer') == quiz[i]['correctAnswer']:
             score += 1
-            
     return jsonify({"score": score})
 
 if __name__ == '__main__':
