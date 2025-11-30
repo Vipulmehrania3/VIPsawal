@@ -1,18 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const BACKEND_URL = "https://your-render-backend-url-goes-here.onrender.com"; // UPDATE THIS!
+    // --- CONFIGURE URL ---
+    const BACKEND_URL = "https://your-render-backend-url-goes-here.onrender.com";
 
-    // --- State ---
     const state = {
-        lang: 'english', // or 'hindi'
+        lang: 'english',
         subject: null,
         selectedChapters: [],
         quizData: [],
         currentIndex: 0,
         answers: [],
-        historyStack: ['screen-start'] // For back button navigation
+        historyStack: ['screen-start']
     };
 
-    // --- Syllabus Data ---
     const syllabus = {
         english: {
             physics: ["Physics and Measurement", "Kinematics", "Laws of Motion", "Work, Energy, and Power", "Rotational Motion", "Gravitation", "Properties of Solids and Liquids", "Thermodynamics", "Kinetic Theory of Gases", "Oscillations and Waves", "Electrostatics", "Current Electricity", "Magnetic Effects of Current and Magnetism", "Electromagnetic Induction and Alternating Currents", "Electromagnetic Waves", "Optics", "Dual Nature of Matter and Radiation", "Atoms and Nuclei", "Electronic Devices"],
@@ -28,129 +27,95 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- DOM Elements ---
     const screens = document.querySelectorAll('.screen');
     const loader = document.getElementById('loader');
-    
-    // --- Navigation Logic ---
+
+    // --- Latex Parser ---
+    function simpleLatex(text) {
+        if (!text) return "";
+        let t = text.replace(/\$/g, "");
+        t = t.replace(/\\text\{([^}]*)\}/g, "$1").replace(/\\mathrm\{([^}]*)\}/g, "$1");
+        t = t.replace(/\^\{([^}]*)\}/g, "<sup>$1</sup>").replace(/\_\{([^}]*)\}/g, "<sub>$1</sub>");
+        t = t.replace(/\^([A-Za-z0-9])/g, "<sup>$1</sup>").replace(/\_([A-Za-z0-9])/g, "<sub>$1</sub>");
+        t = t.replace(/\\,/g, " ").replace(/\\;/g, " ").replace(/\\:/g, " ");
+        return t;
+    }
+
+    // --- Navigation ---
     function showScreen(screenId, direction = 'forward') {
         const activeScreen = document.querySelector('.screen.active');
         const nextScreen = document.getElementById(screenId);
-
         if (activeScreen.id === screenId) return;
 
-        // Manage History
         if (direction === 'forward') {
             state.historyStack.push(screenId);
-            activeScreen.classList.add('slide-out-left'); // Move current left
-            nextScreen.classList.remove('slide-out-left', 'slide-out-right'); // Reset
-            nextScreen.classList.add('active'); // Slide in (default right-to-left via CSS default transform)
-            
-            setTimeout(() => {
-                activeScreen.classList.remove('active', 'slide-out-left');
-            }, 300);
+            activeScreen.classList.add('slide-out-left');
+            nextScreen.classList.remove('slide-out-left', 'slide-out-right');
+            nextScreen.classList.add('active');
+            setTimeout(() => activeScreen.classList.remove('active', 'slide-out-left'), 300);
         } else {
-            // Backward
             state.historyStack.pop();
-            activeScreen.classList.add('slide-out-right'); // Move current right
+            activeScreen.classList.add('slide-out-right');
+            nextScreen.classList.remove('slide-out-left'); 
             nextScreen.classList.add('active');
-            nextScreen.style.transform = 'translateX(-100%)'; // Prep to slide in from left? No, active is 0.
-            
-            // For backward, we want Next to slide in from Left. 
-            // CSS Default is translateX(100%). We need to override momentarily or use specific class.
-            // Simplified: Just use opacity fade or simplified slide for robustness.
-            
-            // Better Logic:
-            activeScreen.classList.remove('active');
-            nextScreen.classList.add('active');
+            setTimeout(() => activeScreen.classList.remove('active', 'slide-out-right'), 300);
         }
-        
-        // Render dynamic content if needed
         if (screenId === 'screen-chapters') renderChapters();
     }
 
-    // Back Button Handler
-    document.querySelectorAll('.back-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (state.historyStack.length > 1) {
-                const prevScreen = state.historyStack[state.historyStack.length - 2];
-                showScreen(prevScreen, 'backward');
-            }
-        });
-    });
+    document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => {
+        if (state.historyStack.length > 1) {
+            const prev = state.historyStack[state.historyStack.length - 2];
+            showScreen(prev, 'backward');
+        }
+    }));
 
-    // Native Back Button Support
-    window.onpopstate = function(event) {
-        // Simple handling: if in quiz, ask confirm. Else go back.
+    window.onpopstate = (e) => {
         if (document.getElementById('screen-quiz').classList.contains('active')) {
             if(!confirm("Quit Quiz?")) return;
         }
-        // Reload or custom logic could go here. For SPA, usually pushState is needed.
+        // Logic for history handling if needed, mostly browser handles basic nav
     };
 
-    // --- Language Toggle ---
-    const langToggle = document.getElementById('language-toggle');
-    langToggle.addEventListener('change', () => {
-        state.lang = langToggle.checked ? 'hindi' : 'english';
-        updateUIText();
+    // --- Start Screen ---
+    document.getElementById('language-toggle').addEventListener('change', (e) => {
+        state.lang = e.target.checked ? 'hindi' : 'english';
+        document.getElementById('txt-select-subject').innerText = state.lang === 'hindi' ? "विषय चुनें" : "Select Subject";
+        document.getElementById('txt-chat-btn').innerText = state.lang === 'hindi' ? "vipAI से चैट करें" : "Chat with vipAI";
     });
 
-    function updateUIText() {
-        const isHi = state.lang === 'hindi';
-        document.getElementById('txt-select-subject').innerText = isHi ? "विषय चुनें" : "Select Subject";
-        document.getElementById('txt-chat-btn').innerText = isHi ? "vipAI से चैट करें" : "Chat with vipAI";
-        // Update subject cards text dynamically if needed, or mapping
-    }
+    document.querySelectorAll('.subject-card').forEach(card => card.addEventListener('click', () => {
+        state.subject = card.dataset.subject;
+        state.selectedChapters = [];
+        showScreen('screen-chapters', 'forward');
+    }));
 
-    // --- Subject Selection ---
-    document.querySelectorAll('.subject-card').forEach(card => {
-        card.addEventListener('click', () => {
-            state.subject = card.dataset.subject;
-            state.selectedChapters = [];
-            showScreen('screen-chapters', 'forward');
-        });
-    });
-
+    // --- Chapters ---
     function renderChapters() {
         const list = document.getElementById('chapter-list');
         list.innerHTML = '';
-        const chapterNames = syllabus[state.lang][state.subject] || [];
-        
-        chapterNames.forEach(chap => {
+        const chapters = syllabus[state.lang][state.subject] || [];
+        chapters.forEach(c => {
             const div = document.createElement('div');
             div.className = 'chapter-item';
-            div.innerText = chap;
+            div.innerText = c;
             div.onclick = () => {
                 div.classList.toggle('selected');
-                if (state.selectedChapters.includes(chap)) {
-                    state.selectedChapters = state.selectedChapters.filter(c => c !== chap);
-                } else {
-                    state.selectedChapters.push(chap);
-                }
+                if (state.selectedChapters.includes(c)) state.selectedChapters = state.selectedChapters.filter(x => x !== c);
+                else state.selectedChapters.push(c);
                 document.getElementById('btn-confirm-chapters').disabled = state.selectedChapters.length === 0;
             };
             list.appendChild(div);
         });
     }
+    document.getElementById('btn-confirm-chapters').onclick = () => showScreen('screen-settings', 'forward');
 
-    document.getElementById('btn-confirm-chapters').addEventListener('click', () => {
-        showScreen('screen-settings', 'forward');
-    });
+    // --- Settings ---
+    const qInput = document.getElementById('question-limit');
+    document.getElementById('num-increase').onclick = () => { if(qInput.value < 50) qInput.value = parseInt(qInput.value) + 5; };
+    document.getElementById('num-decrease').onclick = () => { if(qInput.value > 5) qInput.value = parseInt(qInput.value) - 5; };
 
-    // --- Settings & Generate ---
-    document.getElementById('num-increase').onclick = () => {
-        const inp = document.getElementById('question-limit');
-        if (inp.value < 50) inp.value = parseInt(inp.value) + 5;
-    };
-    document.getElementById('num-decrease').onclick = () => {
-        const inp = document.getElementById('question-limit');
-        if (inp.value > 5) inp.value = parseInt(inp.value) - 5;
-    };
-
-    document.getElementById('btn-generate').addEventListener('click', async () => {
-        const limit = document.getElementById('question-limit').value;
-        const prompt = document.getElementById('style-prompt').value;
-        
+    document.getElementById('btn-generate').onclick = async () => {
         loader.classList.remove('hidden');
         try {
             const res = await fetch(`${BACKEND_URL}/generate_quiz`, {
@@ -159,125 +124,74 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({
                     subject: state.subject,
                     chapter: state.selectedChapters.join(', '),
-                    limit: limit,
-                    style_prompt: prompt,
+                    limit: qInput.value,
+                    style_prompt: document.getElementById('style-prompt').value,
                     language: state.lang
                 })
             });
             const data = await res.json();
             if(data.error) throw new Error(data.error);
-            
             state.quizData = data.questions;
             state.currentIndex = 0;
             state.answers = new Array(state.quizData.length).fill(null);
-            
             renderQuestion();
             showScreen('screen-quiz', 'forward');
-        } catch (e) {
-            alert("Error: " + e.message);
-        } finally {
-            loader.classList.add('hidden');
-        }
-    });
+        } catch (e) { alert(e.message); }
+        finally { loader.classList.add('hidden'); }
+    };
 
-    // --- Quiz Logic & Latex Parser ---
-    function simpleLatex(text) {
-        // The user's Python logic converted to JS
-        if (!text) return "";
-        let t = text.replace(/\$/g, ""); // Remove $
-        t = t.replace(/\\text\{([^}]*)\}/g, "$1"); // \text{}
-        t = t.replace(/\\mathrm\{([^}]*)\}/g, "$1"); // \mathrm{}
-        
-        // Superscripts ^{...} -> ^... (Simplified for HTML display)
-        // We will use HTML tags for better rendering in browser
-        t = t.replace(/\^\{([^}]*)\}/g, "<sup>$1</sup>");
-        t = t.replace(/\_\{([^}]*)\}/g, "<sub>$1</sub>");
-        
-        // Single char sub/sup
-        t = t.replace(/\^([A-Za-z0-9])/g, "<sup>$1</sup>");
-        t = t.replace(/\_([A-Za-z0-9])/g, "<sub>$1</sub>");
-        
-        // Clean latex spaces
-        t = t.replace(/\\,/g, " ").replace(/\\;/g, " ").replace(/\\:/g, " ");
-        return t;
-    }
-
+    // --- Quiz & Swipe ---
     function renderQuestion() {
         const q = state.quizData[state.currentIndex];
-        const bar = document.getElementById('progress-bar');
-        bar.style.width = `${((state.currentIndex + 1) / state.quizData.length) * 100}%`;
-        
-        document.getElementById('q-number').innerText = `Q${state.currentIndex + 1}/${state.quizData.length}`;
+        document.getElementById('progress-bar').style.width = `${((state.currentIndex+1)/state.quizData.length)*100}%`;
+        document.getElementById('q-number').innerText = `Q${state.currentIndex+1}/${state.quizData.length}`;
         document.getElementById('q-text').innerHTML = simpleLatex(q.question);
+        document.getElementById('quiz-subject-title').innerText = state.subject.toUpperCase();
         
-        const optsDiv = document.getElementById('options-list');
-        optsDiv.innerHTML = '';
-        
+        const list = document.getElementById('options-list');
+        list.innerHTML = '';
         q.options.forEach(opt => {
             const btn = document.createElement('div');
             btn.className = 'opt-btn';
-            if (state.answers[state.currentIndex]?.selected === opt) btn.classList.add('selected');
-            
+            if(state.answers[state.currentIndex]?.selected === opt) btn.classList.add('selected');
             btn.innerHTML = simpleLatex(opt);
             btn.onclick = () => {
-                // Save answer
                 state.answers[state.currentIndex] = { selected: opt, correct: q.correctAnswer };
-                // Visual update
                 document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                
-                // Auto Slide (Delayed)
                 setTimeout(() => {
-                    if (state.currentIndex < state.quizData.length - 1) {
+                    if(state.currentIndex < state.quizData.length-1) {
                         state.currentIndex++;
                         renderQuestion();
                     } else {
                         document.getElementById('btn-submit-quiz').style.display = 'block';
+                        // Scroll to bottom to show submit button
+                        document.querySelector('.quiz-footer').scrollIntoView({ behavior: 'smooth' });
                     }
                 }, 800);
             };
-            optsDiv.appendChild(btn);
+            list.appendChild(btn);
         });
-
-        // Submit button logic visibility
-        const subBtn = document.getElementById('btn-submit-quiz');
-        if (state.currentIndex === state.quizData.length - 1) subBtn.style.display = 'block';
-        else subBtn.style.display = 'none';
+        document.getElementById('btn-submit-quiz').style.display = (state.currentIndex === state.quizData.length-1) ? 'block' : 'none';
     }
 
-    // --- Touch Gestures (Swipe) ---
+    // Swipe Logic
     let touchStartX = 0;
-    const quizArea = document.getElementById('screen-quiz');
-    
-    quizArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
-    
-    quizArea.addEventListener('touchend', e => {
+    const quizScreen = document.getElementById('screen-quiz');
+    quizScreen.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+    quizScreen.addEventListener('touchend', e => {
         const touchEndX = e.changedTouches[0].screenX;
-        handleSwipe(touchStartX, touchEndX);
+        if (touchStartX - touchEndX > 50) { // Swipe Left -> Next
+            if(state.currentIndex < state.quizData.length-1) { state.currentIndex++; renderQuestion(); }
+        }
+        if (touchEndX - touchStartX > 50) { // Swipe Right -> Prev
+            if(state.currentIndex > 0) { state.currentIndex--; renderQuestion(); }
+        }
     });
 
-    function handleSwipe(start, end) {
-        const threshold = 50;
-        if (start - end > threshold) {
-            // Swipe Left -> Next
-            if (state.currentIndex < state.quizData.length - 1) {
-                state.currentIndex++;
-                renderQuestion();
-            }
-        }
-        if (end - start > threshold) {
-            // Swipe Right -> Prev
-            if (state.currentIndex > 0) {
-                state.currentIndex--;
-                renderQuestion();
-            }
-        }
-    }
-
     document.getElementById('btn-exit-quiz').onclick = () => {
-        if(confirm("Exit quiz? Progress will be lost.")) showScreen('screen-start', 'backward');
+        if(confirm("Exit Quiz?")) showScreen('screen-start', 'backward');
     };
-
     document.getElementById('btn-submit-quiz').onclick = () => {
         showResults();
         showScreen('screen-result', 'forward');
@@ -288,43 +202,40 @@ document.addEventListener('DOMContentLoaded', () => {
         let score = 0;
         const list = document.getElementById('results-list');
         list.innerHTML = '';
-        
         state.quizData.forEach((q, i) => {
             const userAns = state.answers[i]?.selected;
             const isCorrect = userAns === q.correctAnswer;
             if (isCorrect) score++;
-            
-            const div = document.createElement('div');
-            div.className = `res-item ${isCorrect ? 'correct' : 'wrong'}`;
-            div.innerHTML = `
+            const item = document.createElement('div');
+            item.className = `res-item ${isCorrect ? 'correct' : 'wrong'}`;
+            item.innerHTML = `
                 <p><strong>Q${i+1}:</strong> ${simpleLatex(q.question)}</p>
                 <div class="ans-label">Your Answer: <span class="ans-text ${isCorrect?'green':'red'}">${simpleLatex(userAns || "Skipped")}</span></div>
                 <div class="ans-label">Correct: <span class="ans-text green">${simpleLatex(q.correctAnswer)}</span></div>
-                <div class="ans-label" style="margin-top:5px; font-style:italic;">Exp: ${simpleLatex(q.solution)}</div>
+                <div class="ans-label" style="margin-top:5px;font-style:italic;">${simpleLatex(q.solution)}</div>
             `;
-            list.appendChild(div);
+            list.appendChild(item);
         });
-        
-        const percent = Math.round((score / state.quizData.length) * 100);
+        const percent = Math.round((score/state.quizData.length)*100);
         document.getElementById('score-text').innerText = `${percent}%`;
-        document.getElementById('score-msg').innerText = percent > 80 ? "Excellent!" : "Keep Practicing!";
+        document.getElementById('score-msg').innerText = percent > 80 ? "Excellent Job!" : "Keep Working Hard!";
     }
-
     document.getElementById('btn-home').onclick = () => {
         state.historyStack = ['screen-start'];
-        showScreen('screen-start', 'backward');
+        // Force reset active classes to ensure clean state
+        screens.forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-start').classList.add('active');
     };
 
-    // --- Chat with vipAI ---
+    // --- Chat ---
     document.getElementById('btn-goto-chat').onclick = () => showScreen('screen-chat', 'forward');
-    
     document.getElementById('btn-send-chat').onclick = async () => {
-        const inp = document.getElementById('chat-input');
-        const txt = inp.value.trim();
-        if (!txt) return;
+        const input = document.getElementById('chat-input');
+        const txt = input.value.trim();
+        if(!txt) return;
         
-        addChatMsg(txt, 'user');
-        inp.value = '';
+        appendChat(txt, 'user');
+        input.value = '';
         
         try {
             const res = await fetch(`${BACKEND_URL}/chat_with_vipai`, {
@@ -333,17 +244,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ message: txt, language: state.lang })
             });
             const data = await res.json();
-            addChatMsg(data.reply || "Sorry, I couldn't understand.", 'bot');
-        } catch (e) {
-            addChatMsg("Error connecting to vipAI.", 'bot');
-        }
+            appendChat(data.reply || "Error", 'bot');
+        } catch(e) { appendChat("Connection Error", 'bot'); }
     };
 
-    function addChatMsg(text, sender) {
+    function appendChat(text, sender) {
         const box = document.getElementById('chat-history');
         const div = document.createElement('div');
         div.className = `chat-msg ${sender}`;
-        div.innerHTML = simpleLatex(text); // Apply latex parsing to chat too!
+        div.innerHTML = simpleLatex(text);
         box.appendChild(div);
         box.scrollTop = box.scrollHeight;
     }
