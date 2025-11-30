@@ -1,224 +1,350 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- STEP 1: CONFIGURE YOUR BACKEND URL HERE ---
-    const backendUrl = "https://quiz-second-time.onrender.com";
+    const BACKEND_URL = "https://your-render-backend-url-goes-here.onrender.com"; // UPDATE THIS!
 
-    // --- ELEMENT SELECTORS & STATE ---
-    const screens = {
-        subject: document.getElementById('subject-screen'),
-        chapter: document.getElementById('chapter-screen'),
-        settings: document.getElementById('settings-screen'),
-        quiz: document.getElementById('quiz-area'),
-        result: document.getElementById('result-area'),
-        doubt: document.getElementById('doubt-screen')
+    // --- State ---
+    const state = {
+        lang: 'english', // or 'hindi'
+        subject: null,
+        selectedChapters: [],
+        quizData: [],
+        currentIndex: 0,
+        answers: [],
+        historyStack: ['screen-start'] // For back button navigation
     };
+
+    // --- Syllabus Data ---
+    const syllabus = {
+        english: {
+            physics: ["Physics and Measurement", "Kinematics", "Laws of Motion", "Work, Energy, and Power", "Rotational Motion", "Gravitation", "Properties of Solids and Liquids", "Thermodynamics", "Kinetic Theory of Gases", "Oscillations and Waves", "Electrostatics", "Current Electricity", "Magnetic Effects of Current and Magnetism", "Electromagnetic Induction and Alternating Currents", "Electromagnetic Waves", "Optics", "Dual Nature of Matter and Radiation", "Atoms and Nuclei", "Electronic Devices"],
+            chemistry: ["Some Basic Concepts in Chemistry", "Atomic Structure", "Chemical Bonding", "Thermodynamics", "Solutions", "Equilibrium", "Redox Reactions", "Chemical Kinetics", "p-Block Elements", "d- and f-Block Elements", "Co-ordination Compounds", "Hydrocarbons", "Haloalkanes and Haloarenes", "Alcohols, Phenols and Ethers", "Aldehydes, Ketones and Carboxylic Acids", "Amines", "Biomolecules"],
+            botany: ["Living World", "Biological Classification", "Plant Kingdom", "Morphology of Flowering Plants", "Anatomy of Flowering Plants", "Cell: The Unit of Life", "Cell Cycle", "Photosynthesis", "Respiration in Plants", "Plant Growth", "Sexual Reproduction in Flowering Plants", "Principles of Inheritance", "Molecular Basis of Inheritance", "Ecosystem", "Biodiversity"],
+            zoology: ["Animal Kingdom", "Structural Organisation in Animals", "Digestion", "Breathing", "Body Fluids", "Excretory Products", "Locomotion", "Neural Control", "Chemical Coordination", "Human Reproduction", "Reproductive Health", "Evolution", "Human Health and Disease"]
+        },
+        hindi: {
+            physics: ["भौतिकी और मापन", "गतिकी", "गति के नियम", "कार्य, ऊर्जा और शक्ति", "घूर्णी गति", "गुरुत्वाकर्षण", "ठोस और तरल पदार्थ", "ऊष्मप्रवैगिकी", "दोलन और तरंगें", "स्थिरवैद्युतिकी", "विद्युत धारा", "चुंबकत्व", "विद्युत चुम्बकीय प्रेरण", "प्रकाशिकी", "परमाणु और नाभिक", "इलेक्ट्रॉनिक उपकरण"],
+            chemistry: ["रसायन विज्ञान की मूल अवधारणाएँ", "परमाणु संरचना", "रासायनिक आबंधन", "ऊष्मप्रवैगिकी", "विलयन", "साम्यावस्था", "रेडॉक्स अभिक्रियाएँ", "रासायनिक गतिकी", "p-ब्लॉक", "d- और f-ब्लॉक", "उपसहसंयोजन यौगिक", "हाइड्रोकार्बन", "जैव अणु"],
+            botany: ["जीव जगत", "वनस्पति जगत", "पुष्पी पादपों की आकारिकी", "कोशिका", "प्रकाश संश्लेषण", "श्वसन", "पादप वृद्धि", "पुष्पी पादपों में लैंगिक जनन", "वंशागति के सिद्धांत", "पारिस्थितिकी"],
+            zoology: ["प्राणि जगत", "पाचन एवं अवशोषण", "श्वसन", "शरीर द्रव", "उत्सर्जन", "गमन", "तंत्रिकीय नियंत्रण", "रासायनिक समन्वय", "मानव जनन", "विकास", "मानव स्वास्थ्य"]
+        }
+    };
+
+    // --- DOM Elements ---
+    const screens = document.querySelectorAll('.screen');
     const loader = document.getElementById('loader');
-    let screenHistory = ['subject']; // NEW: History for back button
-
-    const appState = { currentSubject: '', selectedChapters: [], currentQuiz: [], currentQuestionIndex: 0, userAnswers: [] };
     
-    // --- (Syllabus Data is the same as the previous version) ---
-    const chaptersData = {
-        chaptersEnglish: {
-            physics: ["Physics and Measurement", "Kinematics", "Laws of Motion", "Work, Energy, and Power", "Rotational Motion", "Gravitation", "Properties of Solids and Liquids", "Thermodynamics", "Kinetic Theory of Gases", "Oscillations and Waves", "Electrostatics", "Current Electricity", "Magnetic Effects of Current and Magnetism", "Electromagnetic Induction and Alternating Currents", "Electromagnetic Waves", "Optics", "Dual Nature of Matter and Radiation", "Atoms and Nuclei", "Electronic Devices", "Experimental Skills"],
-            chemistry: ["Some Basic Concepts in Chemistry", "Atomic Structure", "Chemical Bonding and Molecular Structure", "Chemical Thermodynamics", "Solutions", "Equilibrium", "Redox Reactions and Electrochemistry", "Chemical Kinetics", "Classification of Elements and Periodicity in Properties", "p-Block Elements", "d- and f-Block Elements", "Co-ordination Compounds", "Purification and Characterisation of Organic Compounds", "Some Basic Principles of Organic Chemistry", "Hydrocarbons", "Organic Compounds Containing Halogens", "Organic Compounds Containing Oxygen", "Organic Compounds Containing Nitrogen", "Biomolecules", "Principles Related to Practical Chemistry"],
-            botany: ["The Living World", "Biological Classification", "Plant Kingdom", "Morphology of Flowering Plants", "Anatomy of Flowering Plants", "Cell: The Unit of Life", "Cell Cycle and Cell Division", "Photosynthesis in Higher Plants", "Respiration in Plants", "Plant Growth and Development", "Transport in Plants", "Mineral Nutrition", "Sexual Reproduction in Flowering Plants", "Principles of Inheritance and Variation", "Molecular Basis of Inheritance", "Evolution", "Microbes in Human Welfare", "Biotechnology: Principles and Processes", "Biotechnology and its Applications", "Organisms and Populations", "Ecosystem", "Biodiversity and Conservation", "Environmental Issues"],
-            zoology: ["Animal Kingdom", "Structural Organisation in Animals", "Digestion and Absorption", "Breathing and Exchange of Gases", "Body Fluids and Circulation", "Excretory Products and their Elimination", "Locomotion and Movement", "Neural Control and Coordination", "Chemical Coordination and Integration", "Biomolecules", "Human Reproduction", "Reproductive Health", "Genetics and Evolution", "Human Health and Disease", "Immunology (as part of Human Health and Disease)"]
+    // --- Navigation Logic ---
+    function showScreen(screenId, direction = 'forward') {
+        const activeScreen = document.querySelector('.screen.active');
+        const nextScreen = document.getElementById(screenId);
+
+        if (activeScreen.id === screenId) return;
+
+        // Manage History
+        if (direction === 'forward') {
+            state.historyStack.push(screenId);
+            activeScreen.classList.add('slide-out-left'); // Move current left
+            nextScreen.classList.remove('slide-out-left', 'slide-out-right'); // Reset
+            nextScreen.classList.add('active'); // Slide in (default right-to-left via CSS default transform)
+            
+            setTimeout(() => {
+                activeScreen.classList.remove('active', 'slide-out-left');
+            }, 300);
+        } else {
+            // Backward
+            state.historyStack.pop();
+            activeScreen.classList.add('slide-out-right'); // Move current right
+            nextScreen.classList.add('active');
+            nextScreen.style.transform = 'translateX(-100%)'; // Prep to slide in from left? No, active is 0.
+            
+            // For backward, we want Next to slide in from Left. 
+            // CSS Default is translateX(100%). We need to override momentarily or use specific class.
+            // Simplified: Just use opacity fade or simplified slide for robustness.
+            
+            // Better Logic:
+            activeScreen.classList.remove('active');
+            nextScreen.classList.add('active');
         }
+        
+        // Render dynamic content if needed
+        if (screenId === 'screen-chapters') renderChapters();
+    }
+
+    // Back Button Handler
+    document.querySelectorAll('.back-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (state.historyStack.length > 1) {
+                const prevScreen = state.historyStack[state.historyStack.length - 2];
+                showScreen(prevScreen, 'backward');
+            }
+        });
+    });
+
+    // Native Back Button Support
+    window.onpopstate = function(event) {
+        // Simple handling: if in quiz, ask confirm. Else go back.
+        if (document.getElementById('screen-quiz').classList.contains('active')) {
+            if(!confirm("Quit Quiz?")) return;
+        }
+        // Reload or custom logic could go here. For SPA, usually pushState is needed.
     };
 
-    // --- NAVIGATION & HISTORY MANAGEMENT ---
-    function showScreen(screenKey) {
-        const newScreen = screens[screenKey];
-        const currentScreen = document.querySelector('.app-screen.active');
-
-        if (!newScreen || newScreen === currentScreen) return;
-        
-        // Update history
-        if(screenHistory[screenHistory.length - 1] !== screenKey) {
-            screenHistory.push(screenKey);
-        }
-
-        // Animation logic
-        currentScreen.classList.remove('active');
-        newScreen.classList.add('active');
-    }
-
-    function goBack() {
-        if (screenHistory.length <= 1) return; // Can't go back from the first screen
-
-        const currentScreenKey = screenHistory.pop();
-        const prevScreenKey = screenHistory[screenHistory.length - 1];
-        
-        const currentScreen = screens[currentScreenKey];
-        const prevScreen = screens[prevScreenKey];
-
-        // Animate current screen out, and bring previous screen into view
-        currentScreen.classList.remove('active');
-        prevScreen.classList.remove('initial'); // Ensure it's not stuck
-        prevScreen.classList.add('active');
-    }
-
-    // --- NEW: Handle Phone's Back Button ---
-    window.addEventListener('popstate', (event) => {
-        // This event is triggered by the browser's back button
-        handleBackButton();
-    });
-    // Add initial state to browser history
-    history.pushState({screen: 'subject'}, '');
-
-    function handleBackButton() {
-        const currentScreenKey = screenHistory[screenHistory.length - 1];
-        
-        if (currentScreenKey === 'quiz') {
-            if (confirm('Are you sure you want to exit the quiz? Your progress will be lost.')) {
-                goBack();
-            } else {
-                // If user says no, push the state back to keep them on the quiz screen
-                history.pushState({screen: 'quiz'}, '');
-            }
-        } else if (screenHistory.length > 1) {
-            goBack();
-        }
-        // If on the first screen, do nothing and let the browser handle it (e.g., exit app)
-    }
-
-
-    document.querySelectorAll('.back-btn').forEach(btn => {
-        btn.addEventListener('click', handleBackButton);
+    // --- Language Toggle ---
+    const langToggle = document.getElementById('language-toggle');
+    langToggle.addEventListener('change', () => {
+        state.lang = langToggle.checked ? 'hindi' : 'english';
+        updateUIText();
     });
 
-    // --- (The rest of the JS is the same as the simplified version from the last correct response) ---
-    // SETUP FLOW
+    function updateUIText() {
+        const isHi = state.lang === 'hindi';
+        document.getElementById('txt-select-subject').innerText = isHi ? "विषय चुनें" : "Select Subject";
+        document.getElementById('txt-chat-btn').innerText = isHi ? "vipAI से चैट करें" : "Chat with vipAI";
+        // Update subject cards text dynamically if needed, or mapping
+    }
+
+    // --- Subject Selection ---
     document.querySelectorAll('.subject-card').forEach(card => {
         card.addEventListener('click', () => {
-            appState.currentSubject = card.dataset.subject;
-            const subjectTitle = card.querySelector('span').textContent;
-            document.getElementById('chapter-title').textContent = `Select Chapters for ${subjectTitle}`;
-            populateChapterList();
-            showScreen('chapter');
-            history.pushState({screen: 'chapter'}, '');
+            state.subject = card.dataset.subject;
+            state.selectedChapters = [];
+            showScreen('screen-chapters', 'forward');
         });
-    });
-    function populateChapterList() {
-        const chapterList = document.getElementById('chapter-list');
-        chapterList.innerHTML = '';
-        const chapters = chaptersData.chaptersEnglish[appState.currentSubject] || [];
-        chapters.forEach(chapter => {
-            const item = document.createElement('div');
-            item.className = 'chapter-item';
-            item.textContent = chapter;
-            item.dataset.chapter = chapter;
-            item.addEventListener('click', () => { item.classList.toggle('selected'); updateSelectedChapters(); });
-            chapterList.appendChild(item);
-        });
-        updateSelectedChapters();
-    }
-    function updateSelectedChapters() {
-        appState.selectedChapters = Array.from(document.querySelectorAll('.chapter-item.selected')).map(item => item.dataset.chapter);
-        document.getElementById('chapter-next-btn').disabled = appState.selectedChapters.length === 0;
-    }
-    document.getElementById('chapter-next-btn').addEventListener('click', () => {
-        showScreen('settings');
-        history.pushState({screen: 'settings'}, '');
     });
 
-    // QUIZ GENERATION & LOGIC
-    document.getElementById('generate-quiz-btn').addEventListener('click', async () => {
-        const questionLimit = document.getElementById('question-limit').value;
-        const stylePrompt = document.getElementById('style-prompt').value;
-        loader.classList.add('active');
+    function renderChapters() {
+        const list = document.getElementById('chapter-list');
+        list.innerHTML = '';
+        const chapterNames = syllabus[state.lang][state.subject] || [];
+        
+        chapterNames.forEach(chap => {
+            const div = document.createElement('div');
+            div.className = 'chapter-item';
+            div.innerText = chap;
+            div.onclick = () => {
+                div.classList.toggle('selected');
+                if (state.selectedChapters.includes(chap)) {
+                    state.selectedChapters = state.selectedChapters.filter(c => c !== chap);
+                } else {
+                    state.selectedChapters.push(chap);
+                }
+                document.getElementById('btn-confirm-chapters').disabled = state.selectedChapters.length === 0;
+            };
+            list.appendChild(div);
+        });
+    }
+
+    document.getElementById('btn-confirm-chapters').addEventListener('click', () => {
+        showScreen('screen-settings', 'forward');
+    });
+
+    // --- Settings & Generate ---
+    document.getElementById('num-increase').onclick = () => {
+        const inp = document.getElementById('question-limit');
+        if (inp.value < 50) inp.value = parseInt(inp.value) + 5;
+    };
+    document.getElementById('num-decrease').onclick = () => {
+        const inp = document.getElementById('question-limit');
+        if (inp.value > 5) inp.value = parseInt(inp.value) - 5;
+    };
+
+    document.getElementById('btn-generate').addEventListener('click', async () => {
+        const limit = document.getElementById('question-limit').value;
+        const prompt = document.getElementById('style-prompt').value;
+        
+        loader.classList.remove('hidden');
         try {
-            const response = await fetch(`${backendUrl}/generate_quiz`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subject: appState.currentSubject, chapter: appState.selectedChapters.join(', '), limit: questionLimit, style_prompt: stylePrompt, language: 'english' })
+            const res = await fetch(`${BACKEND_URL}/generate_quiz`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    subject: state.subject,
+                    chapter: state.selectedChapters.join(', '),
+                    limit: limit,
+                    style_prompt: prompt,
+                    language: state.lang
+                })
             });
-            if (!response.ok) throw new Error((await response.json()).error || 'Failed to generate quiz');
-            appState.currentQuiz = (await response.json()).questions;
-            if (!appState.currentQuiz || appState.currentQuiz.length === 0) throw new Error('AI failed to generate questions.');
-            startQuiz();
-        } catch (error) {
-            alert(`Error: ${error.message}`);
+            const data = await res.json();
+            if(data.error) throw new Error(data.error);
+            
+            state.quizData = data.questions;
+            state.currentIndex = 0;
+            state.answers = new Array(state.quizData.length).fill(null);
+            
+            renderQuestion();
+            showScreen('screen-quiz', 'forward');
+        } catch (e) {
+            alert("Error: " + e.message);
         } finally {
-            loader.classList.remove('active');
+            loader.classList.add('hidden');
         }
     });
-    function startQuiz() {
-        appState.currentQuestionIndex = 0;
-        appState.userAnswers = Array(appState.currentQuiz.length).fill(null);
-        document.getElementById('quiz-title').textContent = appState.currentSubject.charAt(0).toUpperCase() + appState.currentSubject.slice(1);
-        displayQuestion();
-        showScreen('quiz');
-        history.pushState({screen: 'quiz'}, '');
-    }
-    function renderMathematicalText(text) {
-        if (!text) return '';
-        const sub = "₀₁₂₃₄₅₆₇₈₉", sup = "⁰¹²³⁴⁵⁶⁷⁸⁹";
-        let processedText = text.replace(/\$/g, "").replace(/\\text\{([^}]*)\}/g, " $1");
-        processedText = processedText.replace(/([A-Za-z])_\{?([0-9]+)\}?/g, (_, char, nums) => char + [...nums].map(d => sub[d]).join(""));
-        processedText = processedText.replace(/([A-Za-z0-9])\^\{?([0-9]+)\}?/g, (_, char, nums) => char + [...nums].map(d => sup[d]).join(""));
-        return processedText.trim();
-    }
-    function displayQuestion() {
-        const question = appState.currentQuiz[appState.currentQuestionIndex];
-        document.getElementById('progress-bar').style.width = `${((appState.currentQuestionIndex + 1) / appState.currentQuiz.length) * 100}%`;
-        document.getElementById('current-question-number').textContent = `Question ${appState.currentQuestionIndex + 1} / ${appState.currentQuiz.length}`;
-        document.getElementById('question-text').innerHTML = renderMathematicalText(question.question);
-        const optionsContainer = document.getElementById('options-container');
-        optionsContainer.innerHTML = '';
-        question.options.forEach(option => {
-            const btn = document.createElement('button');
-            btn.className = 'option-btn';
-            btn.innerHTML = renderMathematicalText(option);
-            if (appState.userAnswers[appState.currentQuestionIndex]?.selectedAnswer === option) btn.classList.add('selected');
-            btn.addEventListener('click', () => {
-                appState.userAnswers[appState.currentQuestionIndex] = { selectedAnswer: option, timeTaken: Date.now() - (appState.userAnswers[appState.currentQuestionIndex]?.startTime || Date.now()) };
-                optionsContainer.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                setTimeout(() => { if (appState.currentQuestionIndex < appState.currentQuiz.length - 1) { appState.currentQuestionIndex++; displayQuestion(); } }, 500);
-            });
-            optionsContainer.appendChild(btn);
-        });
-        if (!appState.userAnswers[appState.currentQuestionIndex]) appState.userAnswers[appState.currentQuestionIndex] = { startTime: Date.now() };
-        document.getElementById('prev-question-btn').disabled = appState.currentQuestionIndex === 0;
-        document.getElementById('next-question-btn').style.display = appState.currentQuestionIndex === appState.currentQuiz.length - 1 ? 'none' : 'flex';
-        document.getElementById('submit-quiz-btn').style.display = appState.currentQuestionIndex === appState.currentQuiz.length - 1 ? 'flex' : 'none';
-    }
-    document.getElementById('next-question-btn').addEventListener('click', () => { if (appState.currentQuestionIndex < appState.currentQuiz.length - 1) { appState.currentQuestionIndex++; displayQuestion(); } });
-    document.getElementById('prev-question-btn').addEventListener('click', () => { if (appState.currentQuestionIndex > 0) { appState.currentQuestionIndex--; displayQuestion(); } });
-    document.getElementById('submit-quiz-btn').addEventListener('click', showResults);
-    document.getElementById('exit-quiz-btn').addEventListener('click', handleBackButton); // Re-use the same logic
 
-    // RESULTS
+    // --- Quiz Logic & Latex Parser ---
+    function simpleLatex(text) {
+        // The user's Python logic converted to JS
+        if (!text) return "";
+        let t = text.replace(/\$/g, ""); // Remove $
+        t = t.replace(/\\text\{([^}]*)\}/g, "$1"); // \text{}
+        t = t.replace(/\\mathrm\{([^}]*)\}/g, "$1"); // \mathrm{}
+        
+        // Superscripts ^{...} -> ^... (Simplified for HTML display)
+        // We will use HTML tags for better rendering in browser
+        t = t.replace(/\^\{([^}]*)\}/g, "<sup>$1</sup>");
+        t = t.replace(/\_\{([^}]*)\}/g, "<sub>$1</sub>");
+        
+        // Single char sub/sup
+        t = t.replace(/\^([A-Za-z0-9])/g, "<sup>$1</sup>");
+        t = t.replace(/\_([A-Za-z0-9])/g, "<sub>$1</sub>");
+        
+        // Clean latex spaces
+        t = t.replace(/\\,/g, " ").replace(/\\;/g, " ").replace(/\\:/g, " ");
+        return t;
+    }
+
+    function renderQuestion() {
+        const q = state.quizData[state.currentIndex];
+        const bar = document.getElementById('progress-bar');
+        bar.style.width = `${((state.currentIndex + 1) / state.quizData.length) * 100}%`;
+        
+        document.getElementById('q-number').innerText = `Q${state.currentIndex + 1}/${state.quizData.length}`;
+        document.getElementById('q-text').innerHTML = simpleLatex(q.question);
+        
+        const optsDiv = document.getElementById('options-list');
+        optsDiv.innerHTML = '';
+        
+        q.options.forEach(opt => {
+            const btn = document.createElement('div');
+            btn.className = 'opt-btn';
+            if (state.answers[state.currentIndex]?.selected === opt) btn.classList.add('selected');
+            
+            btn.innerHTML = simpleLatex(opt);
+            btn.onclick = () => {
+                // Save answer
+                state.answers[state.currentIndex] = { selected: opt, correct: q.correctAnswer };
+                // Visual update
+                document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                
+                // Auto Slide (Delayed)
+                setTimeout(() => {
+                    if (state.currentIndex < state.quizData.length - 1) {
+                        state.currentIndex++;
+                        renderQuestion();
+                    } else {
+                        document.getElementById('btn-submit-quiz').style.display = 'block';
+                    }
+                }, 800);
+            };
+            optsDiv.appendChild(btn);
+        });
+
+        // Submit button logic visibility
+        const subBtn = document.getElementById('btn-submit-quiz');
+        if (state.currentIndex === state.quizData.length - 1) subBtn.style.display = 'block';
+        else subBtn.style.display = 'none';
+    }
+
+    // --- Touch Gestures (Swipe) ---
+    let touchStartX = 0;
+    const quizArea = document.getElementById('screen-quiz');
+    
+    quizArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+    
+    quizArea.addEventListener('touchend', e => {
+        const touchEndX = e.changedTouches[0].screenX;
+        handleSwipe(touchStartX, touchEndX);
+    });
+
+    function handleSwipe(start, end) {
+        const threshold = 50;
+        if (start - end > threshold) {
+            // Swipe Left -> Next
+            if (state.currentIndex < state.quizData.length - 1) {
+                state.currentIndex++;
+                renderQuestion();
+            }
+        }
+        if (end - start > threshold) {
+            // Swipe Right -> Prev
+            if (state.currentIndex > 0) {
+                state.currentIndex--;
+                renderQuestion();
+            }
+        }
+    }
+
+    document.getElementById('btn-exit-quiz').onclick = () => {
+        if(confirm("Exit quiz? Progress will be lost.")) showScreen('screen-start', 'backward');
+    };
+
+    document.getElementById('btn-submit-quiz').onclick = () => {
+        showResults();
+        showScreen('screen-result', 'forward');
+    };
+
+    // --- Results ---
     function showResults() {
         let score = 0;
-        const detailedResults = document.getElementById('detailed-results');
-        detailedResults.innerHTML = '';
-        appState.currentQuiz.forEach((question, index) => {
-            const userAnswer = appState.userAnswers[index];
-            const isCorrect = userAnswer?.selectedAnswer === question.correctAnswer;
+        const list = document.getElementById('results-list');
+        list.innerHTML = '';
+        
+        state.quizData.forEach((q, i) => {
+            const userAns = state.answers[i]?.selected;
+            const isCorrect = userAns === q.correctAnswer;
             if (isCorrect) score++;
-            const item = document.createElement('div');
-            item.className = `result-item ${isCorrect ? 'correct' : 'incorrect'}`;
-            item.innerHTML = `<div class="result-item-header"><h4>Question ${index + 1}</h4><span class="time-taken"><i class="far fa-clock"></i> ${userAnswer?.timeTaken ? (userAnswer.timeTaken / 1000).toFixed(1) + 's' : 'N/A'}</span></div><p>${renderMathematicalText(question.question)}</p><p>Your Answer: <span class="your-answer ${isCorrect ? 'correct' : 'incorrect'}">${renderMathematicalText(userAnswer?.selectedAnswer) || 'Not Answered'}</span></p>${!isCorrect ? `<p>Correct Answer: <span class="correct-answer">${renderMathematicalText(question.correctAnswer)}</span></p>` : ''}<p class="explanation">${renderMathematicalText(question.solution)}</p>`;
-            detailedResults.appendChild(item);
+            
+            const div = document.createElement('div');
+            div.className = `res-item ${isCorrect ? 'correct' : 'wrong'}`;
+            div.innerHTML = `
+                <p><strong>Q${i+1}:</strong> ${simpleLatex(q.question)}</p>
+                <div class="ans-label">Your Answer: <span class="ans-text ${isCorrect?'green':'red'}">${simpleLatex(userAns || "Skipped")}</span></div>
+                <div class="ans-label">Correct: <span class="ans-text green">${simpleLatex(q.correctAnswer)}</span></div>
+                <div class="ans-label" style="margin-top:5px; font-style:italic;">Exp: ${simpleLatex(q.solution)}</div>
+            `;
+            list.appendChild(div);
         });
-        const scorePercent = appState.currentQuiz.length > 0 ? Math.round((score / appState.currentQuiz.length) * 100) : 0;
-        document.querySelector('.score-circle').style.setProperty('--score-percent', `${scorePercent}%`);
-        document.getElementById('score-display').textContent = `${scorePercent}%`;
-        document.getElementById('score-summary').textContent = `You answered ${score} out of ${appState.currentQuiz.length} questions correctly.`;
-        showScreen('result');
-        history.pushState({screen: 'result'}, '');
+        
+        const percent = Math.round((score / state.quizData.length) * 100);
+        document.getElementById('score-text').innerText = `${percent}%`;
+        document.getElementById('score-msg').innerText = percent > 80 ? "Excellent!" : "Keep Practicing!";
     }
-    document.getElementById('restart-quiz-btn').addEventListener('click', () => {
-        screenHistory = ['subject']; // Reset history
-        showScreen('subject', 'backward');
-        history.pushState({screen: 'subject'}, '');
-    });
 
-    // DOUBT SCREEN
-    document.getElementById('ask-doubt-btn').addEventListener('click', () => {
-        showScreen('doubt');
-        history.pushState({screen: 'doubt'}, '');
-    });
-    // ... (rest of doubt functionality is the same)
+    document.getElementById('btn-home').onclick = () => {
+        state.historyStack = ['screen-start'];
+        showScreen('screen-start', 'backward');
+    };
+
+    // --- Chat with vipAI ---
+    document.getElementById('btn-goto-chat').onclick = () => showScreen('screen-chat', 'forward');
+    
+    document.getElementById('btn-send-chat').onclick = async () => {
+        const inp = document.getElementById('chat-input');
+        const txt = inp.value.trim();
+        if (!txt) return;
+        
+        addChatMsg(txt, 'user');
+        inp.value = '';
+        
+        try {
+            const res = await fetch(`${BACKEND_URL}/chat_with_vipai`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ message: txt, language: state.lang })
+            });
+            const data = await res.json();
+            addChatMsg(data.reply || "Sorry, I couldn't understand.", 'bot');
+        } catch (e) {
+            addChatMsg("Error connecting to vipAI.", 'bot');
+        }
+    };
+
+    function addChatMsg(text, sender) {
+        const box = document.getElementById('chat-history');
+        const div = document.createElement('div');
+        div.className = `chat-msg ${sender}`;
+        div.innerHTML = simpleLatex(text); // Apply latex parsing to chat too!
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
 });
