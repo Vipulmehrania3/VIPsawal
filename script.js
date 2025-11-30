@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- IMPORTANT: UPDATE THIS WITH YOUR LIVE RENDER URL ---
-    const BACKEND_URL = "https://your-render-backend-url-goes-here.onrender.com"; 
+    const BACKEND_URL = "https://quiz-second-time.onrender.com"; 
 
     // --- State ---
     const state = {
