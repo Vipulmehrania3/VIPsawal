@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
-    // 👇👇👇 PASTE YOUR RENDER URL INSIDE THE QUOTES BELOW 👇👇👇
+    // 👇👇👇 PASTE YOUR RENDER URL HERE 👇👇👇
     const backendUrl = "https://quiz-second-time.onrender.com"; 
 
     // --- STATE ---
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('theme-btn').addEventListener('click', () => {
         document.documentElement.classList.toggle('light');
         const theme = document.documentElement.classList.contains('light') ? '#f8fafc' : '#0f172a';
-        document.getElementById('theme-color-meta').setAttribute('content', theme);
+        document.getElementById('theme-color-meta')?.setAttribute('content', theme);
     });
 
     document.getElementById('lang-btn').addEventListener('click', () => {
@@ -232,8 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!selectedChapterIds.includes(chapId)) {
                     selectedChapterIds.push(chapId);
                     document.getElementById('btn-go-setup').disabled = false;
-                    // Visual update for the chapter list logic would be complex here, 
-                    // relying on user to see topics are selected.
                 }
                 playSound('click');
             };
@@ -247,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('confirm-topics-btn').onclick = () => sidebar.classList.remove('open');
     document.getElementById('btn-go-setup').onclick = () => showScreen('screen-setup');
 
-    // --- QUIZ GENERATION ---
+    // --- QUIZ SETUP & GENERATION ---
     const qCountRange = document.getElementById('q-count-range');
     qCountRange.oninput = (e) => document.getElementById('q-count-val').innerText = e.target.value;
 
@@ -260,30 +258,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const count = parseInt(qCountRange.value);
         const prompt = document.getElementById('custom-prompt').value;
         
-        // 1. Get List of Chapter Names
         const chapterNames = selectedSubject.chapters
             .filter(c => selectedChapterIds.includes(c.id))
             .map(c => c.name);
             
-        // 2. Get List of Topic Names
         let topicNames = [];
         Object.values(selectedTopicIds).forEach(list => topicNames.push(...list));
 
-        try {
-            console.log("Sending to backend:", {
-                subject: selectedSubject.name,
-                chapters: chapterNames,
-                topics: topicNames,
-                limit: count,
-            });
+        // Create the string version for old backends
+        const chapterString = chapterNames.join(', ');
 
+        try {
             const res = await fetch(`${backendUrl}/generate_quiz`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     subject: selectedSubject.name,
-                    chapters: chapterNames, // ARRAY
-                    topics: topicNames,     // ARRAY
+                    // Send BOTH 'chapter' (string) AND 'chapters' (list) to fix the error!
+                    chapter: chapterString, 
+                    chapters: chapterNames,
+                    topics: topicNames,
                     limit: count,
                     custom_prompt: prompt,
                     language: currentLang
