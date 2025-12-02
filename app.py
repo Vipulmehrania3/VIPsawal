@@ -3,91 +3,91 @@ from flask_cors import CORS
 import google.generativeai as genai
 import os
 import json
-import re
 
 app = Flask(__name__)
 CORS(app)
 
+# --- Configure Google AI ---
 try:
     genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 except KeyError:
-    print("WARNING: GOOGLE_API_KEY environment variable not found.")
-    GOOGLE_API_KEY = "your_google_api_key_here" # Fallback
+    print("WARNING: Using hardcoded API key for local testing.")
+    GOOGLE_API_KEY = "AIzaSy...Your_Key_Here" # Replace with your key
     genai.configure(api_key=GOOGLE_API_KEY)
 
-model = genai.GenerativeModel('gemini-flash-latest')
-vision_model = genai.GenerativeModel('gemini-pro-vision') # For doubts
+# Use a fast and reliable model
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
-# (The parse_quiz_response function is the same, no changes needed)
-def parse_quiz_response(text_response):
-    questions = []
-    question_blocks = re.findall(r'(^##\s*(?:Question|प्रश्न)\s*\d+:\s*.*?)(?=\n^##\s*(?:Question|प्रश्न)|\Z)', text_response, re.DOTALL | re.MULTILINE | re.IGNORECASE)
-    if not question_blocks:
-        question_blocks = re.findall(r'((?:Question|प्रश्न)\s*\d+:.*?)(?=(?:Question|प्रश्न)\s*\d+:|\Z)', text_response, re.DOTALL | re.IGNORECASE)
-    for block in question_blocks:
-        block_clean = block.strip()
-        block_clean = re.sub(r'^##\s*(?:Question|प्रश्न)\s*\d+:\s*', '', block_clean, flags=re.IGNORECASE | re.MULTILINE)
-        question_match = re.search(r'^(.*?)(?=\n\s*(?:Options|विकल्प):)', block_clean, re.DOTALL | re.IGNORECASE)
-        options_match = re.search(r'(?:Options|विकल्प):\n(.*?)(?=\n\s*(?:Correct Answer|सही उत्तर):)', block_clean, re.DOTALL | re.IGNORECASE)
-        correct_answer_match = re.search(r'(?:Correct Answer|सही उत्तर):\s*(.*?)(?=\n\s*(?:Solution|समाधान):|\Z)', block_clean, re.DOTALL | re.IGNORECASE)
-        solution_match = re.search(r'(?:Solution|समाधान):\s*(.*)', block_clean, re.DOTALL | re.IGNORECASE)
-        if question_match and options_match and correct_answer_match and solution_match:
-            question_text, options_text, correct_answer, solution = (m.group(1).strip() for m in [question_match, options_match, correct_answer_match, solution_match])
-            options_list = [re.sub(r'^[A-Dअ-द]\.\s*', '', opt, flags=re.IGNORECASE).strip() for opt in options_text.split('\n') if opt.strip()]
-            cleaned_correct_answer = re.sub(r'^[A-Dअ-द]\.\s*', '', correct_answer, flags=re.IGNORECASE).strip()
-            questions.append({"id": len(questions) + 1, "question": question_text, "options": options_list, "correctAnswer": cleaned_correct_answer, "solution": solution})
-    return questions
-
+# --- Main API Endpoint ---
 @app.route('/generate_quiz', methods=['POST'])
 def generate_quiz():
     data = request.json
-    # ... (This function remains largely the same)
     subject = data.get('subject')
-    chapter = data.get('chapter')
+    chapter = data.get('chapter') # This is now a comma-separated string of chapters
     limit = data.get('limit', 10)
     language = data.get('language', 'english')
     style_prompt = data.get('style_prompt', '')
-    
-    style_instructions = f"Apply this style: '{style_prompt}'." if style_prompt else ""
-    lang_instructions = "Generate in HINDI." if language == 'hindi' else ""
-    
-    prompt = f"Generate {limit} NEET level MCQs for {subject} on '{chapter}'. {lang_instructions} {style_instructions}. Format: ## Question 1: [Text] Options: A. [Text]... Correct Answer: [Text] Solution: [Text]"
-    
+
+    if not all([subject, chapter, limit]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # --- Construct the AI Prompt ---
+    lang_instruction = "All output MUST be in HINDI." if language == 'hindi' else "All output MUST be in ENGLISH."
+    style_instruction = f"Apply this style constraint: '{style_prompt}'." if style_prompt else ""
+
+    prompt = f"""
+    You are an expert NEET exam creator. Generate {limit} MCQs for the subject '{subject}' focusing on these chapters: '{chapter}'.
+    {lang_instruction}
+    {style_instruction}
+    Questions must be high-quality, conceptual, and strictly based on the NCERT syllabus.
+    Provide a short, NCERT-based explanation for the correct answer.
+    """
+
+    # --- Define the JSON Schema for the AI ---
+    json_schema = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "id": {"type": "string"},
+                "text": {"type": "string", "description": "The question text."},
+                "options": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "An array of exactly 4 option strings."
+                },
+                "correctAnswerIndex": {
+                    "type": "integer",
+                    "description": "The 0-based index (0, 1, 2, or 3) of the correct option in the options array."
+                },
+                "explanation": {"type": "string", "description": "A brief explanation."}
+            },
+            "required": ["text", "options", "correctAnswerIndex", "explanation"]
+        }
+    }
+
     try:
-        response = model.generate_content(prompt)
-        questions = parse_quiz_response(response.text)
+        response = model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "application/json", "response_schema": json_schema}
+        )
+        
+        # The AI now returns structured JSON directly, no parsing needed!
+        questions = json.loads(response.text)
+        
+        # Assign unique IDs if AI doesn't provide them
+        for i, q in enumerate(questions):
+            q['id'] = f"q_{i+1}_{hash(q['text'])}"
+
         return jsonify({"questions": questions})
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Error during AI content generation: {e}")
+        # Log the full error for debugging
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Failed to generate quiz from AI.", "details": str(e)}), 500
 
-# --- NEW ENDPOINT FOR VIP DOUBTS ---
-@app.route('/resolve_doubt', methods=['POST'])
-def resolve_doubt():
-    data = request.json
-    user_query = data.get('prompt')
-    if not user_query:
-        return jsonify({"error": "No prompt provided"}), 400
-    
-    prompt = f"You are a top-tier NEET tutor. A student has asked the following question. Provide a clear, step-by-step explanation suitable for a medical aspirant. Question: '{user_query}'"
-
-    try:
-        # Using the text-only model for now for simplicity
-        response = model.generate_content(prompt)
-        return jsonify({"response": response.text})
-    except Exception as e:
-        print(f"Error resolving doubt: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/analyze_results', methods=['POST'])
-def analyze_results():
-    # ... (This function remains the same)
-    data = request.json
-    quiz = data.get('quiz', [])
-    user_answers = data.get('userAnswers', [])
-    correct_count = sum(1 for i, ans in enumerate(user_answers) if ans and ans.get('selectedAnswer') == quiz[i]['correctAnswer'])
-    # Simplified analysis for stability
-    return jsonify({"score": correct_count, "overallFeedback": "Keep practicing to improve your score!"})
-
-
+# This part is for local testing only. Render uses Gunicorn.
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
