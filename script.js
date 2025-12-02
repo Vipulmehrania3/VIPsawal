@@ -2,208 +2,285 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- STEP 1: CONFIGURE YOUR BACKEND URL HERE ---
     const backendUrl = "https://your-render-backend-url-goes-here.onrender.com";
 
-    // --- State Management ---
-    let state = {
-        currentView: 'HOME',
-        language: 'en',
-        theme: 'dark',
-        subjects: [],
-        selectedSubjectId: null,
-        selectedChapterIds: [],
-        selectedTopicIds: {}, // { chapterId: [topicId1, topicId2] }
-        quizConfig: {
-            questionCount: 10,
-            customPrompt: ''
-        },
-        currentQuiz: [],
-        currentQuestionIndex: 0,
-        userAnswers: [],
-        quizResult: null,
+    // --- Sound Manager ---
+    const sounds = {
+        click: document.getElementById('sound-click'),
+        success: document.getElementById('sound-success'),
+        error: document.getElementById('sound-error'),
+        start: document.getElementById('sound-start'),
+        tada: document.getElementById('sound-tada'),
     };
+    let soundEnabled = true;
+
+    function playSound(soundKey) {
+        if (soundEnabled && sounds[soundKey]) {
+            sounds[soundKey].currentTime = 0;
+            sounds[soundKey].play();
+        }
+    }
 
     // --- Element Selectors ---
-    const mainContent = document.getElementById('main-content');
+    const allScreens = document.querySelectorAll('.app-screen');
     const loader = document.getElementById('loader');
-    const loaderText = document.getElementById('loader-text');
     const subjectCardsContainer = document.getElementById('subject-cards-container');
-    const langToggleBtn = document.getElementById('lang-toggle-btn');
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
-    const vipDoubtsNavBtn = document.getElementById('vip-doubts-nav-btn');
+    const chaptersListContainer = document.getElementById('chapters-list');
+    const chapterSelectTitle = document.getElementById('chapter-select-title');
+    const chapterSelectSubtitle = document.getElementById('chapter-select-subtitle');
+    const continueToSetupBtn = document.getElementById('continue-to-setup-btn');
+    const questionCountSlider = document.getElementById('question-count');
+    const questionCountValue = document.getElementById('question-count-value');
+    const customPromptInput = document.getElementById('custom-prompt');
+    const startQuizBtn = document.getElementById('start-quiz-btn');
+    
+    // Quiz Running Elements
+    const questionProgressText = document.getElementById('question-progress-text');
+    const progressGrid = document.getElementById('progress-bar-grid');
+    const questionTextEl = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const prevQuestionBtn = document.getElementById('prev-question-btn');
+    const nextQuestionBtn = document.getElementById('next-question-btn');
+    const submitTestBtn = document.getElementById('submit-test-btn');
 
-    // --- UI Text (Simplified) ---
-    const UI_TEXT = {
-        en: { startQuiz: "Start AI Quiz", generating: "Generating Questions..." },
-        hi: { startQuiz: "AI क्विज़ शुरू करें", generating: "प्रश्न तैयार हो रहे हैं..." }
-    };
+    // Results Elements
+    const accuracyText = document.getElementById('accuracy-text');
+    const totalQText = document.getElementById('total-q-text');
+    const correctQText = document.getElementById('correct-q-text');
+    const reviewContainer = document.getElementById('review-container');
+
+
+    // --- State Variables ---
+    let currentView = 'home-screen';
+    let currentLanguage = 'en';
+    let selectedSubject = null;
+    let selectedChapterIds = [];
+    let currentQuiz = [];
+    let userAnswers = [];
+    let currentQuestionIndex = 0;
 
     // --- Data (Syllabus) ---
-    // (Abridged for clarity, use your full syllabus here)
-    const SUBJECTS = [
-      {
-        id: 'physics', name: 'Physics', icon: 'fa-atom', chapters: [{ id: 'phy-01', name: 'Kinematics', topics: [{id: 't1', name: 'Topic A'}] }]
-      },
-      {
-        id: 'chemistry', name: 'Chemistry', icon: 'fa-flask', chapters: [{ id: 'chem-01', name: 'Atomic Structure', topics: [{id: 't2', name: 'Topic B'}] }]
-      },
-      {
-        id: 'botany', name: 'Botany', icon: 'fa-leaf', chapters: [{ id: 'bot-01', name: 'Plant Kingdom', topics: [{id: 't3', name: 'Topic C'}] }]
-      },
-      {
-        id: 'zoology', name: 'Zoology', icon: 'fa-dna', chapters: [{ id: 'zoo-01', name: 'Animal Kingdom', topics: [{id: 't4', name: 'Topic D'}] }]
-      }
-    ];
-    state.subjects = SUBJECTS;
+    const SUBJECTS_DATA = { /* Paste the full SUBJECTS array from constants.ts here */ };
+    const UI_TEXT_DATA = { /* Paste the full UI_TEXT object from constants.ts here */ };
 
     // --- Core Functions ---
-
-    function render() {
-        // Hide all screens
-        document.querySelectorAll('.app-screen').forEach(screen => screen.classList.remove('active'));
-        // Show the current one
-        const currentScreen = document.getElementById(`${state.currentView.toLowerCase()}-screen`);
-        if (currentScreen) {
-            currentScreen.classList.add('active');
-        }
-        // Specific render logic for each view
-        if (state.currentView === 'HOME') renderHomeScreen();
-        if (state.currentView === 'CHAPTER_SELECT') renderChapterSelectScreen();
-    }
-    
-    function setState(newState) {
-        state = { ...state, ...newState };
-        render();
+    function showScreen(screenId) {
+        playSound('click');
+        currentView = screenId;
+        allScreens.forEach(screen => {
+            screen.classList.toggle('active', screen.id === screenId);
+        });
     }
 
     const showLoader = (text) => {
-        loaderText.textContent = text;
+        document.getElementById('loader-text').textContent = text;
         loader.classList.add('active');
     };
     const hideLoader = () => loader.classList.remove('active');
 
-    // --- Render Functions for each screen ---
-    
+    // --- Event Listeners ---
+    document.body.addEventListener('click', (e) => {
+        const backBtn = e.target.closest('.back-btn');
+        if (backBtn) {
+            showScreen(backBtn.dataset.target);
+        }
+    });
+
+    document.getElementById('vip-doubts-btn-home').addEventListener('click', () => showScreen('vip-doubts-screen'));
+    continueToSetupBtn.addEventListener('click', () => showScreen('quiz-setup-screen'));
+    questionCountSlider.addEventListener('input', () => {
+        questionCountValue.textContent = questionCountSlider.value;
+    });
+
+    // --- Home Screen Logic ---
     function renderHomeScreen() {
         subjectCardsContainer.innerHTML = '';
-        state.subjects.forEach(subject => {
+        Object.values(SUBJECTS_DATA).forEach(subject => {
             const card = document.createElement('div');
             card.className = 'subject-card';
             card.innerHTML = `
-                <i class="fas ${subject.icon}"></i>
+                <div class="subject-icon" style="background: linear-gradient(45deg, ${subject.color.replace('from-', '').split('-')[0]}-500, ${subject.color.replace('to-', '').split('-')[0]}-600);"><i class="fas fa-${subject.icon.toLowerCase()}"></i></div>
                 <h3>${subject.name}</h3>
                 <p>${subject.chapters.length} Chapters</p>
             `;
-            // Add background color based on subject
-            card.querySelector('i').style.backgroundColor = `var(--brand-${subject.id === 'physics' ? 500 : subject.id === 'chemistry' ? 600 : subject.id === 'botany' ? 400 : 700})`;
-            card.onclick = () => {
-                setState({ currentView: 'CHAPTER_SELECT', selectedSubjectId: subject.id });
-            };
+            card.addEventListener('click', () => {
+                selectedSubject = subject;
+                chapterSelectTitle.textContent = `Select Chapters`;
+                chapterSelectSubtitle.textContent = `from ${subject.name}`;
+                renderChapterSelectScreen();
+                showScreen('chapter-select-screen');
+            });
             subjectCardsContainer.appendChild(card);
         });
     }
 
+    // --- Chapter Select Logic ---
     function renderChapterSelectScreen() {
-        const subject = state.subjects.find(s => s.id === state.selectedSubjectId);
-        if (!subject) return;
-
-        document.getElementById('chapter-select-title').textContent = `Select Chapters from ${subject.name}`;
-        const chaptersList = document.getElementById('chapters-list');
-        chaptersList.innerHTML = '';
-        subject.chapters.forEach(chapter => {
-            const isSelected = state.selectedChapterIds.includes(chapter.id);
+        chaptersListContainer.innerHTML = '';
+        selectedSubject.chapters.forEach(chapter => {
+            const isSelected = selectedChapterIds.includes(chapter.id);
             const item = document.createElement('div');
             item.className = `chapter-item ${isSelected ? 'selected' : ''}`;
+            item.dataset.chapterId = chapter.id;
             item.innerHTML = `
-                <div class="chapter-info">
-                    <div class="checkbox"></div>
-                    <span>${chapter.name}</span>
-                </div>
-                <button class="topics-btn" data-chapter-id="${chapter.id}">Topics</button>
+                <div class="chapter-checkbox"><i class="fas fa-check"></i></div>
+                <h4>${chapter.name}</h4>
             `;
-            item.onclick = () => {
-                const newSelection = isSelected 
-                    ? state.selectedChapterIds.filter(id => id !== chapter.id)
-                    : [...state.selectedChapterIds, chapter.id];
-                setState({ selectedChapterIds: newSelection });
-            };
-            chaptersList.appendChild(item);
+            item.addEventListener('click', () => {
+                const chapterId = item.dataset.chapterId;
+                if (selectedChapterIds.includes(chapterId)) {
+                    selectedChapterIds = selectedChapterIds.filter(id => id !== chapterId);
+                } else {
+                    selectedChapterIds.push(chapterId);
+                }
+                item.classList.toggle('selected');
+                continueToSetupBtn.disabled = selectedChapterIds.length === 0;
+            });
+            chaptersListContainer.appendChild(item);
         });
-        document.getElementById('continue-to-setup-btn').disabled = state.selectedChapterIds.length === 0;
+        continueToSetupBtn.disabled = selectedChapterIds.length === 0;
     }
 
-    // --- Event Listeners ---
-
-    mainContent.addEventListener('click', async (e) => {
-        const target = e.target;
-
-        if (target.closest('.back-btn')) {
-            const currentScreen = target.closest('.app-screen').id;
-            if (currentScreen === 'vip-doubts-screen' || currentScreen === 'chapter-select-screen') {
-                setState({ currentView: 'HOME' });
-            } else if (currentScreen === 'quiz-setup-screen') {
-                setState({ currentView: 'CHAPTER_SELECT' });
-            }
+    // --- Quiz Generation ---
+    startQuizBtn.addEventListener('click', async () => {
+        if (backendUrl.includes("your-render-backend-url-goes-here")) {
+            alert("CRITICAL ERROR: The backendUrl in script.js has not been set.");
+            return;
         }
 
-        if (target.closest('#continue-to-setup-btn')) {
-            setState({ currentView: 'QUIZ_SETUP' });
-        }
+        const chapterNames = selectedSubject.chapters
+            .filter(c => selectedChapterIds.includes(c.id))
+            .map(c => c.name);
 
-        if (target.closest('#start-quiz-btn')) {
-            const lang = state.language === 'hi' ? 'hi' : 'en';
-            showLoader(UI_TEXT[lang].generating);
+        const quizConfig = {
+            subjectId: selectedSubject.id,
+            chapterNames: chapterNames,
+            topicNames: [], // Simplified: not using topics for now
+            count: parseInt(questionCountSlider.value),
+            customPrompt: customPromptInput.value,
+            language: currentLanguage
+        };
+        
+        showLoader("Generating Your AI Quiz...");
+        playSound('start');
+
+        try {
+            // Note: This matches the structure of the old app.py
+            const response = await fetch(`${backendUrl}/generate_quiz`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    subject: selectedSubject.name,
+                    chapter: chapterNames.join(', '), // Send all selected chapters
+                    limit: quizConfig.count,
+                    language: quizConfig.language,
+                    style_prompt: quizConfig.customPrompt
+                })
+            });
+
+            if (!response.ok) throw new Error('Network response was not ok.');
             
-            const subject = state.subjects.find(s => s.id === state.selectedSubjectId);
-            const chapterNames = subject.chapters
-                .filter(c => state.selectedChapterIds.includes(c.id))
-                .map(c => c.name);
+            const data = await response.json();
+            if (!data.questions || data.questions.length === 0) throw new Error("AI failed to generate questions.");
 
-            // Fetch request
-            try {
-                const response = await fetch(`${backendUrl}/generate_quiz`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        subject: state.selectedSubjectId,
-                        chapter: chapterNames.join(', '), // Send names
-                        limit: state.quizConfig.questionCount,
-                        language: state.language,
-                        style_prompt: state.quizConfig.customPrompt
-                    })
-                });
-                if (!response.ok) throw new Error('Network response was not ok.');
-                const data = await response.json();
-                if (!data.questions || data.questions.length === 0) throw new Error('AI failed to generate questions.');
+            currentQuiz = data.questions;
+            userAnswers = new Array(currentQuiz.length).fill(null);
+            currentQuestionIndex = 0;
+            renderQuizScreen();
+            showScreen('quiz-running-screen');
 
-                setState({ currentView: 'QUIZ_RUNNING', currentQuiz: data.questions, currentQuestionIndex: 0, userAnswers: [] });
-            } catch (error) {
-                alert(`Failed to generate quiz: ${error.message}`);
-            } finally {
-                hideLoader();
-            }
-        }
-
-        if (target.closest('#vip-doubts-nav-btn')) {
-            setState({ currentView: 'VIP_DOUBTS' });
-        }
-        
-        if (target.closest('#home-btn')) {
-            setState({ currentView: 'HOME', selectedChapterIds: [], selectedTopicIds: {} });
-        }
-        
-        if (target.closest('#practice-again-btn')) {
-            setState({ currentView: 'QUIZ_SETUP' });
+        } catch (error) {
+            console.error("Quiz Generation Failed:", error);
+            alert("Failed to generate quiz. Please check the backend or try again.");
+            playSound('error');
+        } finally {
+            hideLoader();
         }
     });
 
-    // Theme and Language toggles
-    themeToggleBtn.onclick = () => {
-        const newTheme = state.theme === 'dark' ? 'light' : 'dark';
-        document.documentElement.classList.toggle('dark', newTheme === 'dark');
-        setState({ theme: newTheme });
-    };
-    langToggleBtn.onclick = () => setState({ language: state.language === 'en' ? 'hi' : 'en' });
+    // --- Quiz Running Logic ---
+    function renderQuizScreen() {
+        questionProgressText.textContent = `${currentQuestionIndex + 1} / ${currentQuiz.length}`;
+        progressGrid.innerHTML = currentQuiz.map((_, index) => 
+            `<div class="progress-segment ${index === currentQuestionIndex ? 'active' : userAnswers[index] !== null ? 'answered' : ''}"></div>`
+        ).join('');
+        
+        const question = currentQuiz[currentQuestionIndex];
+        questionTextEl.textContent = question.question;
+        optionsContainer.innerHTML = '';
+        question.options.forEach((option, index) => {
+            const isSelected = userAnswers[currentQuestionIndex] === index;
+            const button = document.createElement('button');
+            button.className = `option-btn ${isSelected ? 'selected' : ''}`;
+            button.textContent = option;
+            button.addEventListener('click', () => {
+                userAnswers[currentQuestionIndex] = index;
+                playSound('click');
+                renderQuizScreen(); // Re-render to show selection
+            });
+            optionsContainer.appendChild(button);
+        });
 
-    // Initial Render
-    document.documentElement.classList.toggle('dark', state.theme === 'dark');
-    render();
+        prevQuestionBtn.disabled = currentQuestionIndex === 0;
+        const isLastQuestion = currentQuestionIndex === currentQuiz.length - 1;
+        nextQuestionBtn.style.display = isLastQuestion ? 'none' : 'flex';
+        submitTestBtn.style.display = isLastQuestion ? 'flex' : 'none';
+    }
+
+    prevQuestionBtn.addEventListener('click', () => {
+        if(currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            renderQuizScreen();
+        }
+    });
+    nextQuestionBtn.addEventListener('click', () => {
+        if(currentQuestionIndex < currentQuiz.length - 1) {
+            currentQuestionIndex++;
+            renderQuizScreen();
+        }
+    });
+    submitTestBtn.addEventListener('click', () => {
+        playSound('tada');
+        renderResultsScreen();
+        showScreen('results-screen');
+    });
+
+    // --- Results Screen Logic ---
+    function renderResultsScreen() {
+        let correctCount = 0;
+        userAnswers.forEach((answerIndex, questionIndex) => {
+            if (answerIndex === currentQuiz[questionIndex].correctAnswerIndex) { // Assuming correctAnswerIndex from AI
+                correctCount++;
+            }
+        });
+        const accuracy = Math.round((correctCount / currentQuiz.length) * 100);
+
+        accuracyText.textContent = `${accuracy}%`;
+        totalQText.textContent = currentQuiz.length;
+        correctQText.textContent = correctCount;
+
+        reviewContainer.innerHTML = '<h3>Review Explanations</h3>';
+        currentQuiz.forEach((q, index) => {
+            const userAnswerIndex = userAnswers[index];
+            const isCorrect = userAnswerIndex === q.correctAnswerIndex;
+            const reviewItem = document.createElement('div');
+            reviewItem.className = `review-item ${isCorrect ? 'correct' : 'incorrect'}`;
+            reviewItem.innerHTML = `
+                <h4>Q${index + 1}: ${q.question}</h4>
+                <p>Your Answer: <span class="${isCorrect ? 'correct' : 'incorrect'}">${userAnswerIndex !== null ? q.options[userAnswerIndex] : 'Skipped'}</span></p>
+                ${!isCorrect ? `<p>Correct Answer: <span class="correct">${q.options[q.correctAnswerIndex]}</span></p>` : ''}
+                <p><i>Explanation: ${q.explanation}</i></p>
+            `;
+            reviewContainer.appendChild(reviewItem);
+        });
+    }
+
+    document.getElementById('home-btn').addEventListener('click', () => {
+        selectedChapterIds = [];
+        showScreen('home-screen');
+    });
+    document.getElementById('retry-btn').addEventListener('click', () => {
+        showScreen('quiz-setup-screen');
+    });
+    
+    // --- Initialize App ---
+    renderHomeScreen();
 });
