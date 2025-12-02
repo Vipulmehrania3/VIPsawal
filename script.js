@@ -1,429 +1,449 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
-    // 👇👇👇 PASTE YOUR RENDER URL HERE 👇👇👇
-    const backendUrl = "https://quiz-second-time.onrender.com"; 
+    const backendUrl = "https://quiz-second-time.onrender.com"; // Replace if different
 
-    // --- STATE ---
-    let currentLang = 'en';
-    let selectedSubject = null;
-    let selectedChapterIds = [];
-    let selectedTopicIds = {}; 
-    let quizData = [];
-    let currentQIndex = 0;
+    // --- VARIABLES ---
+    let currentQuiz = [];
+    let currentQuestionIndex = 0;
     let userAnswers = [];
-    let activeChapterForSidebar = null;
-
-    // --- OFFICIAL SYLLABUS DATA ---
-    const SYLLABUS = {
-        physics: { 
-            name: 'Physics', icon: 'atom', 
-            chapters: [
-                { id: 'p1', name: 'Physics and Measurement', topics: ['SI Units', 'Dimensions', 'Errors in Measurement'] },
-                { id: 'p2', name: 'Kinematics', topics: ['Motion in 1D', 'Projectile Motion', 'Relative Velocity'] },
-                { id: 'p3', name: 'Laws of Motion', topics: ['Newtons Laws', 'Friction', 'Circular Motion'] },
-                { id: 'p4', name: 'Work, Energy and Power', topics: ['Work-Energy Theorem', 'Collisions', 'Power'] },
-                { id: 'p5', name: 'Rotational Motion', topics: ['Centre of Mass', 'Torque', 'Moment of Inertia'] },
-                { id: 'p6', name: 'Gravitation', topics: ['Keplers Laws', 'Escape Velocity', 'Satellites'] },
-                { id: 'p7', name: 'Properties of Solids and Liquids', topics: ['Elasticity', 'Viscosity', 'Surface Tension', 'Bernoullis Principle'] },
-                { id: 'p8', name: 'Thermodynamics', topics: ['First Law', 'Entropy', 'Carnot Engine'] },
-                { id: 'p9', name: 'Kinetic Theory of Gases', topics: ['Ideal Gas Equation', 'RMS Speed', 'Degrees of Freedom'] },
-                { id: 'p10', name: 'Oscillations and Waves', topics: ['SHM', 'Doppler Effect', 'Beats'] },
-                { id: 'p11', name: 'Electrostatics', topics: ['Coulombs Law', 'Electric Field', 'Capacitors'] },
-                { id: 'p12', name: 'Current Electricity', topics: ['Ohms Law', 'Kirchhoffs Laws', 'Potentiometer'] },
-                { id: 'p13', name: 'Magnetic Effects of Current and Magnetism', topics: ['Biot-Savart Law', 'Amperes Law', 'Earths Magnetism'] },
-                { id: 'p14', name: 'Electromagnetic Induction and AC', topics: ['Faradays Law', 'Lenz Law', 'LCR Circuits'] },
-                { id: 'p15', name: 'Electromagnetic Waves', topics: ['EM Spectrum', 'Displacement Current'] },
-                { id: 'p16', name: 'Optics', topics: ['Reflection/Refraction', 'Lenses/Mirrors', 'Wave Optics', 'Interference'] },
-                { id: 'p17', name: 'Dual Nature of Matter', topics: ['Photoelectric Effect', 'De Broglie Hypothesis'] },
-                { id: 'p18', name: 'Atoms and Nuclei', topics: ['Bohr Model', 'Radioactivity', 'Fission/Fusion'] },
-                { id: 'p19', name: 'Electronic Devices', topics: ['Semiconductors', 'Logic Gates', 'PN Junction'] },
-                { id: 'p20', name: 'Experimental Skills', topics: ['Vernier Calipers', 'Screw Gauge', 'Simple Pendulum'] }
-            ]
-        },
-        chemistry: { 
-            name: 'Chemistry', icon: 'flask', 
-            chapters: [
-                { id: 'c1', name: 'Some Basic Concepts in Chemistry', topics: ['Mole Concept', 'Stoichiometry'] },
-                { id: 'c2', name: 'Atomic Structure', topics: ['Bohr Model', 'Quantum Numbers', 'Electronic Config'] },
-                { id: 'c3', name: 'Chemical Bonding', topics: ['VSEPR Theory', 'Hybridization', 'MOT'] },
-                { id: 'c4', name: 'Chemical Thermodynamics', topics: ['Enthalpy', 'Entropy', 'Gibbs Free Energy'] },
-                { id: 'c5', name: 'Solutions', topics: ['Raoults Law', 'Colligative Properties', 'Van\'t Hoff Factor'] },
-                { id: 'c6', name: 'Equilibrium', topics: ['Le Chatelier Principle', 'pH Calculation', 'Buffer Solutions'] },
-                { id: 'c7', name: 'Redox Reactions and Electrochemistry', topics: ['Nernst Equation', 'Conductance', 'Batteries'] },
-                { id: 'c8', name: 'Chemical Kinetics', topics: ['Rate Law', 'Order of Reaction', 'Arrhenius Equation'] },
-                { id: 'c9', name: 'Classification of Elements', topics: ['Periodic Trends', 'Ionization Energy'] },
-                { id: 'c10', name: 'p-Block Elements', topics: ['Group 13-18 Trends', 'Important Compounds'] },
-                { id: 'c11', name: 'd- and f-Block Elements', topics: ['Transition Metals', 'Lanthanoids', 'KMnO4/K2Cr2O7'] },
-                { id: 'c12', name: 'Co-ordination Compounds', topics: ['IUPAC Nomenclature', 'Isomerism', 'CFT'] },
-                { id: 'c13', name: 'Purification & Characterisation', topics: ['Chromatography', 'Qualitative Analysis'] },
-                { id: 'c14', name: 'Basic Principles of Organic Chemistry', topics: ['IUPAC Naming', 'Isomerism', 'Reaction Mechanisms'] },
-                { id: 'c15', name: 'Hydrocarbons', topics: ['Alkanes/Alkenes/Alkynes', 'Aromatic Hydrocarbons'] },
-                { id: 'c16', name: 'Organic Compounds containing Halogens', topics: ['SN1/SN2', 'Haloalkanes', 'Haloarenes'] },
-                { id: 'c17', name: 'Organic Compounds containing Oxygen', topics: ['Alcohols', 'Phenols', 'Ethers', 'Aldehydes', 'Ketones', 'Acids'] },
-                { id: 'c18', name: 'Organic Compounds containing Nitrogen', topics: ['Amines', 'Diazonium Salts'] },
-                { id: 'c19', name: 'Biomolecules', topics: ['Carbohydrates', 'Proteins', 'Nucleic Acids', 'Vitamins'] },
-                { id: 'c20', name: 'Principles Related to Practical Chemistry', topics: ['Titration', 'Salt Analysis'] }
-            ]
-        },
-        botany: { 
-            name: 'Botany', icon: 'leaf', 
-            chapters: [
-                { id: 'b1', name: 'Diversity in Living World', topics: ['Living World', 'Biological Classification', 'Plant Kingdom'] },
-                { id: 'b2', name: 'Structural Organisation in Plants', topics: ['Morphology of Flowering Plants', 'Anatomy of Flowering Plants'] },
-                { id: 'b3', name: 'Cell: Structure and Function', topics: ['Cell The Unit of Life', 'Biomolecules', 'Cell Cycle & Division'] },
-                { id: 'b4', name: 'Plant Physiology', topics: ['Photosynthesis', 'Respiration', 'Plant Growth & Development'] },
-                { id: 'b5', name: 'Reproduction in Flowering Plants', topics: ['Flower Structure', 'Pollination', 'Double Fertilization'] },
-                { id: 'b6', name: 'Genetics', topics: ['Principles of Inheritance', 'Molecular Basis of Inheritance'] },
-                { id: 'b7', name: 'Ecology', topics: ['Organisms & Populations', 'Ecosystem', 'Biodiversity'] }
-            ]
-        },
-        zoology: { 
-            name: 'Zoology', icon: 'skull', 
-            chapters: [
-                { id: 'z1', name: 'Animal Kingdom', topics: ['Classification of Animals', 'Non-Chordates', 'Chordates'] },
-                { id: 'z2', name: 'Structural Organisation in Animals', topics: ['Animal Tissues', 'Frog (Morphology/Anatomy)'] },
-                { id: 'z3', name: 'Human Physiology', topics: ['Digestion', 'Breathing', 'Circulation', 'Excretion', 'Locomotion', 'Neural Control', 'Chemical Control'] },
-                { id: 'z4', name: 'Human Reproduction', topics: ['Male/Female System', 'Gametogenesis', 'Reproductive Health'] },
-                { id: 'z5', name: 'Evolution', topics: ['Origin of Life', 'Evidences', 'Hardy-Weinberg'] },
-                { id: 'z6', name: 'Biology and Human Welfare', topics: ['Human Health & Disease', 'Microbes in Human Welfare'] },
-                { id: 'z7', name: 'Biotechnology', topics: ['Principles & Processes', 'Applications'] }
-            ]
-        }
+    let selectedOptionValue = null;
+    let questionStartTime;
+    let quizSettings = {
+        lang: 'english',
+        theme: 'dark',
+        sound: true
     };
-
-    // --- DOM ELEMENTS ---
-    const screens = document.querySelectorAll('.app-screen');
-    const sidebar = document.getElementById('topic-sidebar');
-    const loader = document.getElementById('loader');
     
-    // --- UTILS ---
-    const playSound = (id) => document.getElementById(`snd-${id}`)?.play().catch(() => {}); // catch error if user hasn't interacted
-    const showScreen = (id) => {
-        screens.forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
+    // Canvas Vars
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    // --- ELEMENTS ---
+    const screens = document.querySelectorAll('.app-screen');
+    const elements = {
+        setup: document.getElementById('quiz-setup'),
+        quiz: document.getElementById('quiz-area'),
+        result: document.getElementById('result-area'),
+        history: document.getElementById('history-area'),
+        loader: document.getElementById('loader'),
+        roughPad: document.getElementById('rough-pad'),
+        canvas: document.getElementById('rough-canvas'),
+        ctx: document.getElementById('rough-canvas').getContext('2d'),
+        
+        subject: document.getElementById('subject-select'),
+        chapter: document.getElementById('chapter-select'),
+        limit: document.getElementById('question-limit'),
+        prompt: document.getElementById('style-prompt'),
+        startBtn: document.getElementById('start-quiz-btn'),
+        
+        quizTopic: document.getElementById('quiz-topic-display'),
+        qNum: document.getElementById('current-question-number'),
+        qText: document.getElementById('question-text'),
+        opts: document.getElementById('options-container'),
+        nextBtn: document.getElementById('next-question-btn'),
+        submitBtn: document.getElementById('submit-quiz-btn'),
+        timer: document.getElementById('timer'),
+        
+        score: document.getElementById('score-display'),
+        summary: document.getElementById('score-summary'),
+        details: document.getElementById('detailed-results'),
+        homeBtn: document.getElementById('home-btn'),
+        
+        historyList: document.getElementById('history-list'),
+        
+        // Toggles & Icons
+        themeToggle: document.getElementById('theme-toggle'),
+        langToggle: document.getElementById('lang-toggle'),
+        soundToggle: document.getElementById('sound-toggle'),
+        historyBtn: document.getElementById('history-btn'),
+        roughToggle: document.getElementById('rough-pad-toggle'),
+        exitBtn: document.getElementById('exit-quiz-btn'),
+        
+        // Rough Pad
+        penSize: document.getElementById('pen-size'),
+        clearRough: document.getElementById('clear-rough'),
+        closeRough: document.getElementById('close-rough'),
+
+        // Audio
+        audClick: document.getElementById('sound-click'),
+        audSuccess: document.getElementById('sound-success'),
+        audError: document.getElementById('sound-error')
     };
-    const showLoader = (show) => loader.classList.toggle('active', show);
 
-    // --- SWIPE HANDLER ---
-    function addSwipeHandler(element, onLeft, onRight) {
-        let touchStartX = 0;
-        let touchEndX = 0;
-        
-        element.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-        }, {passive: true});
-        
-        element.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleGesture();
-        }, {passive: true});
-        
-        function handleGesture() {
-            if (touchEndX < touchStartX - 50) if(onLeft) onLeft();
-            if (touchEndX > touchStartX + 50) if(onRight) onRight();
-        }
+    // --- DATA (Syllabus) ---
+    const chaptersEnglish = {
+        botany: [
+            "Biological Classification", // ADDED
+            "The Living World", "Plant Kingdom", "Morphology of Flowering Plants", "Anatomy of Flowering Plants", "Cell: The Unit of Life", "Cell Cycle and Cell Division", "Photosynthesis in Higher Plants", "Respiration in Plants", "Plant Growth and Development", "Transport in Plants", "Mineral Nutrition",
+            "Sexual Reproduction in Flowering Plants", "Principles of Inheritance and Variation", "Molecular Basis of Inheritance", "Evolution", "Microbes in Human Welfare", "Biotechnology: Principles and Processes", "Biotechnology and its Applications", "Organisms and Populations", "Ecosystem", "Biodiversity and Conservation", "Environmental Issues"
+        ],
+        zoology: ["Animal Kingdom", "Structural Organisation in Animals", "Digestion and Absorption", "Breathing and Exchange of Gases", "Body Fluids and Circulation", "Excretory Products and their Elimination", "Locomotion and Movement", "Neural Control and Coordination", "Chemical Coordination and Integration", "Biomolecules", "Human Reproduction", "Reproductive Health", "Genetics and Evolution", "Human Health and Disease", "Immunology"],
+        physics: ["Physics and Measurement", "Kinematics", "Laws of Motion", "Work, Energy, and Power", "Rotational Motion", "Gravitation", "Properties of Solids and Liquids", "Thermodynamics", "Kinetic Theory of Gases", "Oscillations and Waves", "Electrostatics", "Current Electricity", "Magnetic Effects of Current and Magnetism", "Electromagnetic Induction and Alternating Currents", "Electromagnetic Waves", "Optics", "Dual Nature of Matter and Radiation", "Atoms and Nuclei", "Electronic Devices"],
+        chemistry: ["Some Basic Concepts", "Atomic Structure", "Chemical Bonding", "Thermodynamics", "Solutions", "Equilibrium", "Redox & Electrochemistry", "Chemical Kinetics", "Periodicity", "p-Block", "d- and f-Block", "Co-ordination Compounds", "Organic Basics", "Hydrocarbons", "Haloalkanes/Haloarenes", "Alcohols/Phenols/Ethers", "Aldehydes/Ketones/Carboxylic Acids", "Amines", "Biomolecules"]
+    };
+
+    const chaptersHindi = {
+        botany: ["जीव जगत का वर्गीकरण", "जीव जगत", "वनस्पति जगत", "पुष्पी पादपों की आकारिकी", "पुष्पी पादपों का शारीर", "कोशिका: जीवन की इकाई", "कोशिका चक्र", "प्रकाश संश्लेषण", "श्वसन", "पादप वृद्धि", "परिवहन", "खनिज पोषण", "लैंगिक जनन", "वंशागति के सिद्धांत", "आणविक आधार", "विकास", "सूक्ष्मजीव", "जैव प्रौद्योगिकी सिद्धांत", "जैव प्रौद्योगिकी उपयोग", "जीव और समष्टियाँ", "पारितंत्र", "जैव विविधता", "पर्यावरण"],
+        // (Shortened for brevity, you can fill the rest based on previous prompt if needed, logic handles fallback)
+        zoology: ["प्राणि जगत", "संरचनात्मक संगठन", "पाचन", "श्वसन", "परिसंचरण", "उत्सर्जन", "गमन", "तंत्रिकीय नियंत्रण", "रासायनिक समन्वय", "जैव अणु", "मानव जनन", "जनन स्वास्थ्य", "आनुवंशिकी", "स्वास्थ्य और रोग", "प्रतिरक्षा"],
+        physics: ["मापन", "गतिकी", "गति के नियम", "कार्य ऊर्जा", "घूर्णी गति", "गुरुत्वाकर्षण", "ठोस द्रव गुण", "ऊष्मप्रवैगिकी", "अणुगति सिद्धांत", "दोलन", "स्थिरवैद्युतिकी", "धारा", "चुंबकत्व", "प्रेरण", "तरंगें", "प्रकाशिकी", "द्वैत प्रकृति", "परमाणु", "इलेक्ट्रॉनिक्स"],
+        chemistry: ["मूल अवधारणाएँ", "परमाणु संरचना", "आबंधन", "ऊष्मप्रवैगिकी", "विलयन", "साम्यावस्था", "वैद्युतरसायन", "गतिकी", "आवर्तिता", "p-ब्लॉक", "d-f ब्लॉक", "उपसहसंयोजन", "कार्बनिक सिद्धांत", "हाइड्रोकार्बन", "हैलोजन यौगिक", "ऑक्सीजन यौगिक", "एल्डिहाइड/केटोन", "एमीन", "जैव अणु"]
+    };
+
+    // --- FUNCTIONS ---
+
+    function playSound(type) {
+        if (!quizSettings.sound) return;
+        if (type === 'click') elements.audClick.play();
+        if (type === 'success') elements.audSuccess.play();
+        if (type === 'error') elements.audError.play();
     }
 
-    addSwipeHandler(sidebar, null, () => sidebar.classList.remove('open'));
-    const quizArea = document.getElementById('screen-quiz');
-    addSwipeHandler(quizArea, 
-        () => document.getElementById('btn-next').click(), 
-        () => document.getElementById('btn-prev').click()
-    );
-
-    // --- NAVIGATION ---
-    document.querySelectorAll('.back-btn').forEach(btn => {
-        btn.addEventListener('click', () => showScreen(btn.dataset.to));
-    });
-
-    document.getElementById('theme-btn').addEventListener('click', () => {
-        document.documentElement.classList.toggle('light');
-        const theme = document.documentElement.classList.contains('light') ? '#f8fafc' : '#0f172a';
-        document.getElementById('theme-color-meta')?.setAttribute('content', theme);
-    });
-
-    document.getElementById('lang-btn').addEventListener('click', () => {
-        currentLang = currentLang === 'en' ? 'hi' : 'en';
-        document.getElementById('lang-btn').innerText = currentLang === 'en' ? 'EN' : 'HI';
-        updateLanguage();
-    });
-
-    function updateLanguage() {
-        document.querySelectorAll('[data-en]').forEach(el => {
-            el.innerText = el.getAttribute(`data-${currentLang}`);
-        });
+    function switchScreen(screenId) {
+        screens.forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
     }
 
-    // --- HOME SCREEN ---
-    const subjectGrid = document.getElementById('subject-grid');
-    Object.keys(SYLLABUS).forEach(key => {
-        const sub = SYLLABUS[key];
-        const card = document.createElement('div');
-        card.className = 'subject-card';
-        card.innerHTML = `<i class="fas fa-${sub.icon}"></i><h3>${sub.name}</h3><p>${sub.chapters.length} Chapters</p>`;
-        card.onclick = () => loadChapters(key);
-        subjectGrid.appendChild(card);
-    });
-
-    document.getElementById('btn-go-vip').onclick = () => showScreen('screen-vip');
-
-    // --- CHAPTER SELECTION ---
-    function loadChapters(subjectKey) {
-        selectedSubject = SYLLABUS[subjectKey];
-        selectedChapterIds = [];
-        selectedTopicIds = {};
-        
-        document.getElementById('selected-subject-name').innerText = selectedSubject.name;
-        const list = document.getElementById('chapter-list');
-        list.innerHTML = '';
-
-        selectedSubject.chapters.forEach(chap => {
-            const div = document.createElement('div');
-            div.className = 'chapter-item';
-            div.innerHTML = `
-                <div class="chapter-left" onclick="toggleChapter('${chap.id}', this)">
-                    <div class="checkbox"><i class="fas fa-check"></i></div>
-                    <span>${chap.name}</span>
-                </div>
-                <button class="topic-btn" onclick="openSidebar('${chap.id}')">Topics</button>
-            `;
-            list.appendChild(div);
-        });
-        
-        document.getElementById('btn-go-setup').disabled = true;
-        showScreen('screen-chapters');
+    function toggleLoader(show, text = "Loading...") {
+        document.getElementById('loader-text').textContent = text;
+        elements.loader.style.display = show ? 'flex' : 'none';
     }
 
-    window.toggleChapter = (chapId, el) => {
-        const parent = el.parentElement;
-        parent.classList.toggle('selected');
-        if (selectedChapterIds.includes(chapId)) {
-            selectedChapterIds = selectedChapterIds.filter(id => id !== chapId);
-        } else {
-            selectedChapterIds.push(chapId);
-        }
-        document.getElementById('btn-go-setup').disabled = selectedChapterIds.length === 0;
+    // --- SETTINGS LOGIC ---
+    function loadSettings() {
+        const saved = localStorage.getItem('vipSettings');
+        if (saved) quizSettings = JSON.parse(saved);
+        
+        // Apply Theme
+        document.body.classList.toggle('light-theme', quizSettings.theme === 'light');
+        elements.themeToggle.className = quizSettings.theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+        
+        // Apply Sound Icon
+        elements.soundToggle.className = quizSettings.sound ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+        
+        updateLanguageUI();
+    }
+
+    function saveSettings() {
+        localStorage.setItem('vipSettings', JSON.stringify(quizSettings));
+    }
+
+    elements.themeToggle.onclick = () => {
+        quizSettings.theme = quizSettings.theme === 'dark' ? 'light' : 'dark';
+        saveSettings();
+        loadSettings();
         playSound('click');
     };
 
-    // --- SIDEBAR & TOPIC SELECTION ---
-    window.openSidebar = (chapId) => {
-        activeChapterForSidebar = chapId;
-        const chap = selectedSubject.chapters.find(c => c.id === chapId);
-        const list = document.getElementById('topic-list');
-        list.innerHTML = `<h4>${chap.name}</h4>`;
-        
-        chap.topics.forEach(topic => {
-            const isSel = (selectedTopicIds[chapId] || []).includes(topic);
-            const div = document.createElement('div');
-            div.className = `topic-item ${isSel ? 'selected' : ''}`;
-            div.innerHTML = `<div class="checkbox"><i class="fas fa-check"></i></div><span>${topic}</span>`;
-            
-            div.onclick = () => {
-                div.classList.toggle('selected');
-                if (!selectedTopicIds[chapId]) selectedTopicIds[chapId] = [];
-                
-                if (div.classList.contains('selected')) {
-                    selectedTopicIds[chapId].push(topic);
-                } else {
-                    selectedTopicIds[chapId] = selectedTopicIds[chapId].filter(t => t !== topic);
-                }
-                
-                if (!selectedChapterIds.includes(chapId)) {
-                    selectedChapterIds.push(chapId);
-                    document.getElementById('btn-go-setup').disabled = false;
-                }
-                playSound('click');
-            };
-            list.appendChild(div);
-        });
-        
-        sidebar.classList.add('open');
+    elements.soundToggle.onclick = () => {
+        quizSettings.sound = !quizSettings.sound;
+        saveSettings();
+        loadSettings();
+        playSound('click');
     };
 
-    document.getElementById('close-sidebar-btn').onclick = () => sidebar.classList.remove('open');
-    document.getElementById('confirm-topics-btn').onclick = () => sidebar.classList.remove('open');
-    document.getElementById('btn-go-setup').onclick = () => showScreen('screen-setup');
+    elements.langToggle.onclick = () => {
+        quizSettings.lang = quizSettings.lang === 'english' ? 'hindi' : 'english';
+        saveSettings();
+        updateLanguageUI();
+        populateChapters(); // Refresh list
+        playSound('click');
+    };
 
-    // --- QUIZ SETUP & GENERATION ---
-    const qCountRange = document.getElementById('q-count-range');
-    qCountRange.oninput = (e) => document.getElementById('q-count-val').innerText = e.target.value;
+    function updateLanguageUI() {
+        const isHindi = quizSettings.lang === 'hindi';
+        document.getElementById('lbl-subject').textContent = isHindi ? 'विषय चुनें' : 'Select Subject';
+        document.getElementById('lbl-chapter').textContent = isHindi ? 'अध्याय चुनें' : 'Select Chapter';
+        document.getElementById('lbl-limit').textContent = isHindi ? 'प्रश्नों की संख्या' : 'Number of Questions';
+        document.getElementById('lbl-prompt').textContent = isHindi ? 'कस्टम निर्देश (वैकल्पिक)' : 'Custom Instructions (Optional)';
+        elements.startBtn.textContent = isHindi ? 'क्विज़ प्रारंभ करें' : 'Start Quiz';
+        elements.homeBtn.textContent = isHindi ? 'होम' : 'Go Home';
+    }
 
-    document.getElementById('btn-start-quiz').onclick = async () => {
-        if (!selectedSubject) return;
-        
-        showLoader(true);
-        playSound('start');
-        
-        const count = parseInt(qCountRange.value);
-        const prompt = document.getElementById('custom-prompt').value;
-        
-        const chapterNames = selectedSubject.chapters
-            .filter(c => selectedChapterIds.includes(c.id))
-            .map(c => c.name);
-            
-        let topicNames = [];
-        Object.values(selectedTopicIds).forEach(list => topicNames.push(...list));
+    // --- QUIZ SETUP ---
+    function populateChapters() {
+        elements.chapter.innerHTML = '<option value="">-- Select Chapter --</option>';
+        elements.chapter.disabled = true;
+        const sub = elements.subject.value;
+        if (!sub) return;
 
-        // Create the string version for old backends
-        const chapterString = chapterNames.join(', ');
+        const list = (quizSettings.lang === 'hindi' && chaptersHindi[sub]) ? chaptersHindi[sub] : chaptersEnglish[sub];
+        // We always use English list values for backend consistency, display text varies
+        const refList = chaptersEnglish[sub]; 
+
+        refList.forEach((chap, i) => {
+            const opt = document.createElement('option');
+            opt.value = chap; // Send English name to API
+            opt.textContent = list[i] || chap; // Show Hindi/English
+            elements.chapter.appendChild(opt);
+        });
+        elements.chapter.disabled = false;
+        checkStartBtn();
+    }
+
+    function checkStartBtn() {
+        elements.startBtn.disabled = !(elements.subject.value && elements.chapter.value);
+    }
+
+    elements.subject.onchange = () => { populateChapters(); checkStartBtn(); playSound('click'); };
+    elements.chapter.onchange = () => { checkStartBtn(); playSound('click'); };
+
+    // --- QUIZ GENERATION ---
+    elements.startBtn.onclick = async () => {
+        playSound('click');
+        const subject = elements.subject.options[elements.subject.selectedIndex].text;
+        const chapter = elements.chapter.value;
+        const limit = parseInt(elements.limit.value);
+        const prompt = elements.prompt.value.trim();
+
+        toggleLoader(true, quizSettings.lang === 'hindi' ? 'क्विज़ बन रहा है...' : 'Generating Quiz...');
 
         try {
             const res = await fetch(`${backendUrl}/generate_quiz`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    subject: selectedSubject.name,
-                    // Send BOTH 'chapter' (string) AND 'chapters' (list) to fix the error!
-                    chapter: chapterString, 
-                    chapters: chapterNames,
-                    topics: topicNames,
-                    limit: count,
-                    custom_prompt: prompt,
-                    language: currentLang
+                    subject, chapter, limit,
+                    language: quizSettings.lang,
+                    style_prompt: prompt
                 })
             });
-            
+
+            if (!res.ok) throw new Error("Failed to fetch");
             const data = await res.json();
             
-            if (!res.ok) {
-                throw new Error(data.error || "Server error");
-            }
+            if (!data.questions || data.questions.length === 0) throw new Error("Empty quiz");
+
+            currentQuiz = data.questions;
+            currentQuestionIndex = 0;
+            userAnswers = [];
             
-            if(!data.questions || data.questions.length === 0) {
-                throw new Error("AI returned no questions. Try selecting different chapters.");
-            }
-            
-            quizData = data.questions;
-            startQuiz();
-        } catch (e) {
-            console.error(e);
-            alert("Error: " + e.message);
-            showLoader(false);
+            elements.quizTopic.textContent = chapter;
+            showQuestion(0);
+            switchScreen('quiz-area');
+
+        } catch (err) {
+            alert("Connection Error. Please try again.");
+            console.error(err);
+        } finally {
+            toggleLoader(false);
         }
     };
 
-    // --- QUIZ RUNNING ---
-    function startQuiz() {
-        showLoader(false);
-        currentQIndex = 0;
-        userAnswers = Array(quizData.length).fill(null);
-        document.getElementById('total-q-num').innerText = quizData.length;
-        renderQuestion();
-        showScreen('screen-quiz');
-    }
-
-    function renderQuestion() {
-        const q = quizData[currentQIndex];
-        document.getElementById('curr-q-num').innerText = currentQIndex + 1;
-        document.getElementById('progress-fill').style.width = `${((currentQIndex + 1) / quizData.length) * 100}%`;
+    // --- QUIZ LOGIC ---
+    function showQuestion(index) {
+        selectedOptionValue = null;
+        questionStartTime = Date.now();
+        const q = currentQuiz[index];
         
-        document.getElementById('question-text').innerText = q.text;
-        const optsDiv = document.getElementById('options-container');
-        optsDiv.innerHTML = '';
+        elements.qNum.textContent = `Q ${index + 1}/${currentQuiz.length}`;
+        elements.qText.textContent = q.question; // Ensure plain text rendering
         
-        q.options.forEach((opt, idx) => {
+        elements.opts.innerHTML = '';
+        
+        // Randomize options visually but keep track
+        q.options.forEach(opt => {
             const btn = document.createElement('button');
-            btn.innerText = opt;
-            if (userAnswers[currentQIndex] === idx) btn.classList.add('selected');
-            btn.onclick = () => {
-                userAnswers[currentQIndex] = idx;
-                renderQuestion(); 
-                playSound('click');
-            };
-            optsDiv.appendChild(btn);
+            btn.className = 'option-btn';
+            btn.textContent = opt;
+            btn.onclick = () => selectOption(btn, opt);
+            elements.opts.appendChild(btn);
         });
-        
-        document.getElementById('btn-prev').disabled = currentQIndex === 0;
-        const nextBtn = document.getElementById('btn-next');
-        if (currentQIndex === quizData.length - 1) {
-            nextBtn.innerText = "Submit";
-            nextBtn.onclick = finishQuiz;
+
+        // Toggle Next/Submit buttons
+        if (index === currentQuiz.length - 1) {
+            elements.nextBtn.style.display = 'none';
+            elements.submitBtn.style.display = 'block';
         } else {
-            nextBtn.innerText = "Next";
-            nextBtn.onclick = () => { currentQIndex++; renderQuestion(); };
+            elements.nextBtn.style.display = 'block';
+            elements.submitBtn.style.display = 'none';
         }
     }
 
-    document.getElementById('btn-prev').onclick = () => { currentQIndex--; renderQuestion(); };
-    document.getElementById('btn-quit-quiz').onclick = () => {
-        if(confirm("Quit quiz?")) showScreen('screen-home');
+    function selectOption(btn, value) {
+        playSound('click');
+        const all = document.querySelectorAll('.option-btn');
+        all.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedOptionValue = value;
+    }
+
+    function saveAnswer() {
+        const timeTaken = Math.round((Date.now() - questionStartTime) / 1000);
+        userAnswers[currentQuestionIndex] = {
+            qIndex: currentQuestionIndex,
+            selected: selectedOptionValue, // null if skipped
+            correct: currentQuiz[currentQuestionIndex].correctAnswer,
+            time: timeTaken
+        };
+    }
+
+    elements.nextBtn.onclick = () => {
+        saveAnswer();
+        currentQuestionIndex++;
+        showQuestion(currentQuestionIndex);
+        playSound('click');
     };
 
-    // --- RESULTS ---
-    function finishQuiz() {
-        playSound('tada');
-        let correct = 0;
-        const reviewList = document.getElementById('review-list');
-        reviewList.innerHTML = '';
+    elements.submitBtn.onclick = () => {
+        saveAnswer();
+        finishQuiz();
+        playSound('click');
+    };
 
-        quizData.forEach((q, i) => {
-            const userAns = userAnswers[i];
-            const isCorrect = userAns === q.correctAnswerIndex;
-            if (isCorrect) correct++;
+    elements.exitBtn.onclick = () => {
+        if(confirm("Exit quiz? Progress will be lost.")) {
+            switchScreen('quiz-setup');
+        }
+    };
+
+    // --- RESULTS & HISTORY ---
+    function finishQuiz() {
+        let score = 0;
+        elements.details.innerHTML = '';
+
+        // Calculate Score & Generate Details HTML
+        userAnswers.forEach((ans, i) => {
+            const q = currentQuiz[i];
+            const isCorrect = ans.selected && ans.selected.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
+            if (isCorrect) score++;
 
             const div = document.createElement('div');
-            div.className = 'review-item';
+            div.className = `result-card ${isCorrect ? 'correct' : 'wrong'}`;
+            
             div.innerHTML = `
-                <h4>Q${i+1}: ${q.text}</h4>
-                <div class="ans" style="color: ${isCorrect ? 'var(--success)' : 'var(--danger)'}">
-                    Your Answer: ${userAns !== null ? q.options[userAns] : 'Skipped'}
+                <h4>Q${i+1}: ${q.question}</h4>
+                <span class="ans-label ${isCorrect ? 'green' : 'red'}">
+                    Your Answer: ${ans.selected || 'Skipped'}
+                </span>
+                <span class="ans-label green">Correct: ${q.correctAnswer}</span>
+                <div class="explanation">
+                    <strong>NCERT Explanation:</strong> ${q.solution}
+                    <br><small>Time taken: ${ans.time}s</small>
                 </div>
-                ${!isCorrect ? `<div class="ans" style="color: var(--success)">Correct: ${q.options[q.correctAnswerIndex]}</div>` : ''}
-                <div class="exp">${q.explanation}</div>
             `;
-            reviewList.appendChild(div);
+            elements.details.appendChild(div);
         });
 
-        document.getElementById('result-score').innerText = Math.round((correct / quizData.length) * 100) + "%";
-        document.getElementById('stat-correct').innerText = correct;
-        document.getElementById('stat-wrong').innerText = quizData.length - correct;
-        showScreen('screen-result');
+        const percent = Math.round((score / currentQuiz.length) * 100);
+        elements.score.textContent = `${percent}%`;
+        elements.summary.textContent = `You scored ${score} / ${currentQuiz.length}`;
+        
+        playSound(percent > 50 ? 'success' : 'error');
+
+        // Save to History
+        const historyEntry = {
+            date: new Date().toLocaleDateString(),
+            topic: elements.quizTopic.textContent,
+            score: score,
+            total: currentQuiz.length,
+            details: elements.details.innerHTML // Store HTML for easy replay
+        };
+        saveToHistory(historyEntry);
+
+        switchScreen('result-area');
     }
 
-    // --- VIP DOUBTS (CHAT UI) ---
-    const chatHistory = document.getElementById('chat-history');
-    const doubtInput = document.getElementById('doubt-input');
+    function saveToHistory(entry) {
+        let hist = JSON.parse(localStorage.getItem('vipHistory') || '[]');
+        hist.unshift(entry); // Add to top
+        if (hist.length > 20) hist.pop(); // Keep last 20
+        localStorage.setItem('vipHistory', JSON.stringify(hist));
+    }
 
-    document.getElementById('btn-send-doubt').onclick = handleDoubt;
-    doubtInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleDoubt(); });
-
-    async function handleDoubt() {
-        const text = doubtInput.value.trim();
-        if (!text) return;
+    // --- HISTORY UI ---
+    elements.historyBtn.onclick = () => {
+        const hist = JSON.parse(localStorage.getItem('vipHistory') || '[]');
+        elements.historyList.innerHTML = '';
         
-        addMessage(text, 'user');
-        doubtInput.value = '';
-        
-        const loadId = addMessage('Thinking...', 'ai');
-
-        try {
-            const res = await fetch(`${backendUrl}/resolve_doubt`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: text, language: currentLang })
+        if (hist.length === 0) {
+            elements.historyList.innerHTML = '<p style="text-align:center">No quizzes attempted yet.</p>';
+        } else {
+            hist.forEach((h, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div>
+                        <strong>${h.topic}</strong><br>
+                        <small>${h.date}</small>
+                    </div>
+                    <div style="font-weight:bold; color: var(--accent-color)">
+                        ${h.score}/${h.total}
+                    </div>
+                `;
+                // Click to view details
+                div.onclick = () => {
+                    elements.score.textContent = Math.round((h.score/h.total)*100) + '%';
+                    elements.summary.textContent = "Review Mode";
+                    elements.details.innerHTML = h.details;
+                    switchScreen('result-area');
+                };
+                elements.historyList.appendChild(div);
             });
-            
-            if(!res.ok) throw new Error("Network error");
-            
-            const data = await res.json();
-            const aiMsgDiv = document.getElementById(loadId);
-            if(aiMsgDiv) aiMsgDiv.innerHTML = `<div class="msg-content">${data.answer}</div>`;
-            
-        } catch (e) {
-            const aiMsgDiv = document.getElementById(loadId);
-            if(aiMsgDiv) aiMsgDiv.innerHTML = `<div class="msg-content">Error connecting to AI. Please try again.</div>`;
         }
+        switchScreen('history-area');
     };
 
-    function addMessage(text, sender) {
-        const id = 'msg-' + Date.now();
-        const div = document.createElement('div');
-        div.id = id;
-        div.className = `chat-msg ${sender}`;
-        div.innerHTML = `<div class="msg-content">${text}</div>`;
-        chatHistory.appendChild(div);
-        chatHistory.scrollTop = chatHistory.scrollHeight;
-        return id;
+    document.getElementById('back-from-history').onclick = () => switchScreen('quiz-setup');
+    elements.homeBtn.onclick = () => switchScreen('quiz-setup');
+
+    // --- ROUGH PAD LOGIC ---
+    elements.roughToggle.onclick = () => {
+        elements.roughPad.classList.add('active');
+        resizeCanvas();
+    };
+    elements.closeRough.onclick = () => elements.roughPad.classList.remove('active');
+    elements.clearRough.onclick = () => elements.ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+
+    function resizeCanvas() {
+        elements.canvas.width = window.innerWidth;
+        elements.canvas.height = window.innerHeight;
     }
+
+    function startDraw(e) {
+        isDrawing = true;
+        const { x, y } = getPos(e);
+        lastX = x;
+        lastY = y;
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        const { x, y } = getPos(e);
+        
+        elements.ctx.strokeStyle = '#000';
+        elements.ctx.lineJoin = 'round';
+        elements.ctx.lineCap = 'round';
+        elements.ctx.lineWidth = elements.penSize.value;
+        
+        elements.ctx.beginPath();
+        elements.ctx.moveTo(lastX, lastY);
+        elements.ctx.lineTo(x, y);
+        elements.ctx.stroke();
+        
+        lastX = x;
+        lastY = y;
+    }
+
+    function getPos(e) {
+        if(e.touches) {
+            return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+        return { x: e.clientX, y: e.clientY };
+    }
+
+    elements.canvas.addEventListener('mousedown', startDraw);
+    elements.canvas.addEventListener('mousemove', draw);
+    elements.canvas.addEventListener('mouseup', () => isDrawing = false);
+    elements.canvas.addEventListener('mouseout', () => isDrawing = false);
+    
+    // Touch support
+    elements.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDraw(e); });
+    elements.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+    elements.canvas.addEventListener('touchend', () => isDrawing = false);
+
+    // --- INIT ---
+    loadSettings();
+    populateChapters();
 });
