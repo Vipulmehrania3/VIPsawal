@@ -29,11 +29,11 @@ def generate_quiz():
     prompt = f"""
     Act as a NEET Exam expert. Create {limit} MCQs for Subject: {subject}.
     Chapters: {', '.join(chapters)}.
-    Specific Topics (Focus here): {', '.join(topics)}.
+    Specific Topics: {', '.join(topics)}.
     Language: {lang_txt}.
     User Instruction: {prompt_custom}
     
-    Output JSON format:
+    Output purely in JSON format with this schema:
     [
       {{
         "text": "Question stem",
@@ -62,7 +62,7 @@ def resolve_doubt():
     lang_instruction = "Answer in Hindi." if lang == 'hi' else "Answer in English."
     
     prompt = f"""
-    You are a NEET Tutor. Explain this doubt simply and clearly based on NCERT:
+    You are a polite and expert NEET Tutor. Explain this doubt clearly based on NCERT concepts:
     "{query}"
     {lang_instruction}
     """
