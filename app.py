@@ -7,35 +7,36 @@ import json
 app = Flask(__name__)
 CORS(app)
 
-# Configure API Key
 try:
     genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 except KeyError:
     print("Warning: API Key not found in env.")
 
-# Use the fast model
 model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 @app.route('/generate_quiz', methods=['POST'])
 def generate_quiz():
     data = request.json
-    print(f"Received Quiz Request: {data}") # Log incoming data
-
     subject = data.get('subject')
-    chapters = data.get('chapters', []) # Expecting a LIST
-    topics = data.get('topics', [])     # Expecting a LIST
+    
+    # Handle both new (list) and old (string) formats for robustness
+    chapters = data.get('chapters')
+    if not chapters:
+        # Fallback for old frontend sending 'chapter' string
+        chapters = [data.get('chapter', 'General')]
+    elif isinstance(chapters, str):
+        chapters = [chapters]
+        
+    topics = data.get('topics', [])
     limit = data.get('limit', 10)
     lang = data.get('language', 'en')
     prompt_custom = data.get('custom_prompt', '')
 
-    if not subject:
-        return jsonify({"error": "Subject is required"}), 400
-    
-    # Handle case where chapters might be empty (though frontend checks this)
-    chapter_str = ", ".join(chapters) if chapters else "General " + subject
-    topic_str = ", ".join(topics) if topics else "General Topics"
-
     lang_txt = "HINDI (Devanagari script)" if lang == 'hi' else "ENGLISH"
+    
+    # Create strings for prompt
+    chapter_str = ", ".join(chapters)
+    topic_str = ", ".join(topics) if topics else "General Topics"
     
     prompt = f"""
     Act as a strict NEET Exam Examiner. Create {limit} multiple-choice questions (MCQs).
@@ -53,7 +54,7 @@ def generate_quiz():
     JSON Schema:
     [
       {{
-        "text": "Question text here",
+        "text": "Question stem",
         "options": ["Option A", "Option B", "Option C", "Option D"],
         "correctAnswerIndex": 0, (Integer 0-3)
         "explanation": "Short reasoning based on NCERT."
@@ -66,9 +67,7 @@ def generate_quiz():
             prompt,
             generation_config={"response_mime_type": "application/json"}
         )
-        # Parse JSON
-        quiz_json = json.loads(response.text)
-        return jsonify({"questions": quiz_json})
+        return jsonify({"questions": json.loads(response.text)})
 
     except Exception as e:
         print(f"Error generating quiz: {e}")
@@ -77,8 +76,6 @@ def generate_quiz():
 @app.route('/resolve_doubt', methods=['POST'])
 def resolve_doubt():
     data = request.json
-    print(f"Received Doubt: {data}")
-
     query = data.get('query')
     lang = data.get('language', 'en')
     
