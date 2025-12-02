@@ -11,63 +11,86 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Audio Elements -->
     <audio id="sound-click" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
     <audio id="sound-success" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
     <audio id="sound-error" src="https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3"></audio>
 
     <div class="mobile-container">
+        <!-- STATUS BAR SPACER (Fixes top buttons being unclickable) -->
+        <div class="status-bar-spacer"></div>
+
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-left">
+                <i id="back-btn" class="fas fa-arrow-left" style="display: none;"></i>
+                <i id="theme-toggle" class="fas fa-moon" title="Toggle Theme"></i>
+            </div>
+            <h1 id="app-title">VIPQuizs</h1>
+            <div class="header-right">
+                <i id="lang-toggle" class="fas fa-language" title="Switch Language"></i>
+                <i id="sound-toggle" class="fas fa-volume-up" title="Toggle Sound"></i>
+                <i id="history-btn" class="fas fa-history" title="History"></i>
+            </div>
+        </header>
+
         <main class="app-main">
-            <!-- HEADER (Settings & Navigation) -->
-            <header class="app-header">
-                <div class="header-left">
-                    <i id="theme-toggle" class="fas fa-moon" title="Toggle Theme"></i>
-                    <i id="lang-toggle" class="fas fa-language" title="Switch Language"></i>
-                </div>
-                <h1 id="app-title">VIPQuizs</h1>
-                <div class="header-right">
-                    <i id="sound-toggle" class="fas fa-volume-up" title="Toggle Sound"></i>
-                    <i id="history-btn" class="fas fa-history" title="Previous Quizzes"></i>
-                </div>
-            </header>
-
-            <!-- Screen 1: Quiz Setup -->
-            <section id="quiz-setup" class="app-screen active">
+            <!-- Screen 1: HOME (Subject Selection) -->
+            <section id="home-screen" class="app-screen active">
                 <div class="screen-content">
-                    <div class="input-group">
-                        <label for="subject-select" id="lbl-subject">Select Subject</label>
-                        <select id="subject-select">
-                            <option value="">-- Choose Subject --</option>
-                            <option value="botany">Botany</option>
-                            <option value="zoology">Zoology</option>
-                            <option value="physics">Physics</option>
-                            <option value="chemistry">Chemistry</option>
-                        </select>
+                    <h2 class="section-title">Select Subject</h2>
+                    <div class="subject-grid">
+                        <div class="subject-card botany" data-subject="botany">
+                            <i class="fas fa-leaf"></i>
+                            <span>Botany</span>
+                        </div>
+                        <div class="subject-card zoology" data-subject="zoology">
+                            <i class="fas fa-paw"></i>
+                            <span>Zoology</span>
+                        </div>
+                        <div class="subject-card physics" data-subject="physics">
+                            <i class="fas fa-atom"></i>
+                            <span>Physics</span>
+                        </div>
+                        <div class="subject-card chemistry" data-subject="chemistry">
+                            <i class="fas fa-flask"></i>
+                            <span>Chemistry</span>
+                        </div>
                     </div>
-
-                    <div class="input-group">
-                        <label for="chapter-select" id="lbl-chapter">Select Chapter</label>
-                        <select id="chapter-select" disabled>
-                            <option value="">-- Select Chapter --</option>
-                        </select>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="question-limit" id="lbl-limit">Number of Questions</label>
-                        <input type="number" id="question-limit" value="10" min="5" max="50">
-                    </div>
-
-                    <!-- Symmetrical Prompt Section -->
-                    <div class="input-group prompt-group">
-                        <label for="style-prompt" id="lbl-prompt">Custom Instructions (Optional)</label>
-                        <textarea id="style-prompt" rows="2" placeholder="e.g. Assertion-Reason only, Match the column..."></textarea>
-                    </div>
-
-                    <button id="start-quiz-btn" class="btn btn-primary" disabled>Start Quiz</button>
                 </div>
             </section>
 
-            <!-- Screen 2: Quiz Area -->
+            <!-- Screen 2: CHAPTER SELECTION -->
+            <section id="chapter-screen" class="app-screen">
+                <div class="screen-content">
+                    <h2 class="section-title" id="lbl-select-chap">Select Chapter</h2>
+                    <div id="chapter-list" class="chapter-list-container">
+                        <!-- Chapters generated via JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Screen 3: CONFIGURATION (Q Count & Prompt) -->
+            <section id="config-screen" class="app-screen">
+                <div class="screen-content">
+                    <h2 class="section-title" id="lbl-config">Configure Quiz</h2>
+                    
+                    <div class="config-card">
+                        <div class="input-group">
+                            <label for="question-limit" id="lbl-limit">Number of Questions</label>
+                            <input type="number" id="question-limit" value="10" min="5" max="50">
+                        </div>
+
+                        <div class="input-group prompt-group">
+                            <label for="style-prompt" id="lbl-prompt">Custom Instructions (Optional)</label>
+                            <textarea id="style-prompt" rows="3" placeholder="e.g. Assertion-Reason only, Match the column..."></textarea>
+                        </div>
+                    </div>
+
+                    <button id="start-quiz-btn" class="btn btn-primary">Start Quiz</button>
+                </div>
+            </section>
+
+            <!-- Screen 4: QUIZ AREA -->
             <section id="quiz-area" class="app-screen">
                 <header class="quiz-subheader">
                     <h2 id="quiz-topic-display">Topic</h2>
@@ -81,14 +104,10 @@
                         <span id="current-question-number">Q 1/10</span>
                         <span id="timer">00:00</span>
                     </div>
-                    
-                    <!-- Question text container -->
                     <div class="question-box">
-                        <p id="question-text">Loading question...</p>
+                        <p id="question-text">Loading...</p>
                     </div>
-
                     <div id="options-container"></div>
-                    
                     <div class="quiz-actions">
                         <button id="next-question-btn" class="btn btn-primary">Next</button>
                         <button id="submit-quiz-btn" class="btn btn-success" style="display:none;">Submit Test</button>
@@ -96,38 +115,31 @@
                 </div>
             </section>
 
-            <!-- Screen 3: Result Area -->
+            <!-- Screen 5: RESULTS -->
             <section id="result-area" class="app-screen">
                 <div class="screen-content result-content">
                     <div class="result-header">
-                        <h2 id="lbl-results">Test Results</h2>
+                        <h2 id="lbl-results">Results</h2>
                         <div class="score-circle">
                             <span id="score-display">0%</span>
                         </div>
                         <p id="score-summary"></p>
                     </div>
-                    
-                    <div id="detailed-results">
-                        <!-- Questions and Explanations go here -->
-                    </div>
-                    
+                    <div id="detailed-results"></div>
                     <button id="home-btn" class="btn btn-secondary">Go Home</button>
                 </div>
             </section>
 
-            <!-- Screen 4: History Area -->
+            <!-- Screen 6: HISTORY -->
             <section id="history-area" class="app-screen">
                 <div class="screen-content">
-                    <h2 id="lbl-history">Previous Quizzes</h2>
-                    <div id="history-list">
-                        <!-- History items go here -->
-                    </div>
-                    <button id="back-from-history" class="btn btn-secondary">Back</button>
+                    <h2 id="lbl-history">History</h2>
+                    <div id="history-list"></div>
                 </div>
             </section>
         </main>
 
-        <!-- Rough Pad Overlay -->
+        <!-- Overlays -->
         <div id="rough-pad" class="rough-pad-overlay">
             <div class="rough-pad-controls">
                 <input type="range" id="pen-size" min="1" max="10" value="2">
@@ -137,7 +149,6 @@
             <canvas id="rough-canvas"></canvas>
         </div>
 
-        <!-- Fullscreen Loader -->
         <div id="loader" class="loader-overlay">
             <div class="spinner"></div>
             <p id="loader-text">Generating Quiz...</p>
