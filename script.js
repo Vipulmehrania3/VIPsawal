@@ -12,27 +12,86 @@ document.addEventListener('DOMContentLoaded', () => {
     let userAnswers = [];
     let activeChapterForSidebar = null;
 
-    // --- DATA (Syllabus) ---
-    // A simplified version of the syllabus for demonstration. 
-    // In a real app, this would be the huge object you provided.
+    // --- OFFICIAL NEET 2025 SYLLABUS ---
     const SYLLABUS = {
-        physics: { name: 'Physics', icon: 'atom', chapters: [
-            { id: 'p1', name: 'Kinematics', topics: ['Motion in 1D', 'Projectile Motion', 'Relative Velocity'] },
-            { id: 'p2', name: 'Laws of Motion', topics: ['Newtons Laws', 'Friction', 'Circular Motion'] },
-            { id: 'p3', name: 'Gravitation', topics: ['Keplers Laws', 'Gravitational Potential', 'Satellites'] }
-        ]},
-        chemistry: { name: 'Chemistry', icon: 'flask', chapters: [
-            { id: 'c1', name: 'Atomic Structure', topics: ['Bohr Model', 'Quantum Numbers'] },
-            { id: 'c2', name: 'Thermodynamics', topics: ['First Law', 'Entropy', 'Gibbs Energy'] }
-        ]},
-        botany: { name: 'Botany', icon: 'leaf', chapters: [
-            { id: 'b1', name: 'Plant Kingdom', topics: ['Algae', 'Bryophytes', 'Gymnosperms'] },
-            { id: 'b2', name: 'Photosynthesis', topics: ['Light Reaction', 'C3 Cycle', 'C4 Cycle'] }
-        ]},
-        zoology: { name: 'Zoology', icon: 'skull', chapters: [
-            { id: 'z1', name: 'Human Physiology', topics: ['Digestion', 'Respiration', 'Circulation'] },
-            { id: 'z2', name: 'Human Reproduction', topics: ['Male System', 'Female System', 'Fertilization'] }
-        ]}
+        physics: { 
+            name: 'Physics', 
+            icon: 'atom', 
+            chapters: [
+                { id: 'p1', name: 'Physics and Measurement', topics: ['SI Units', 'Dimensions', 'Errors in Measurement'] },
+                { id: 'p2', name: 'Kinematics', topics: ['Motion in 1D', 'Projectile Motion', 'Relative Velocity'] },
+                { id: 'p3', name: 'Laws of Motion', topics: ['Newtons Laws', 'Friction', 'Circular Motion'] },
+                { id: 'p4', name: 'Work, Energy and Power', topics: ['Work-Energy Theorem', 'Collisions', 'Power'] },
+                { id: 'p5', name: 'Rotational Motion', topics: ['Centre of Mass', 'Torque', 'Moment of Inertia'] },
+                { id: 'p6', name: 'Gravitation', topics: ['Keplers Laws', 'Escape Velocity', 'Satellites'] },
+                { id: 'p7', name: 'Properties of Solids and Liquids', topics: ['Elasticity', 'Viscosity', 'Surface Tension', 'Bernoullis Principle'] },
+                { id: 'p8', name: 'Thermodynamics', topics: ['First Law', 'Entropy', 'Carnot Engine'] },
+                { id: 'p9', name: 'Kinetic Theory of Gases', topics: ['Ideal Gas Equation', 'RMS Speed', 'Degrees of Freedom'] },
+                { id: 'p10', name: 'Oscillations and Waves', topics: ['SHM', 'Doppler Effect', 'Beats'] },
+                { id: 'p11', name: 'Electrostatics', topics: ['Coulombs Law', 'Electric Field', 'Capacitors'] },
+                { id: 'p12', name: 'Current Electricity', topics: ['Ohms Law', 'Kirchhoffs Laws', 'Potentiometer'] },
+                { id: 'p13', name: 'Magnetic Effects of Current and Magnetism', topics: ['Biot-Savart Law', 'Amperes Law', 'Earths Magnetism'] },
+                { id: 'p14', name: 'Electromagnetic Induction and AC', topics: ['Faradays Law', 'Lenz Law', 'LCR Circuits'] },
+                { id: 'p15', name: 'Electromagnetic Waves', topics: ['EM Spectrum', 'Displacement Current'] },
+                { id: 'p16', name: 'Optics', topics: ['Reflection/Refraction', 'Lenses/Mirrors', 'Wave Optics', 'Interference'] },
+                { id: 'p17', name: 'Dual Nature of Matter', topics: ['Photoelectric Effect', 'De Broglie Hypothesis'] },
+                { id: 'p18', name: 'Atoms and Nuclei', topics: ['Bohr Model', 'Radioactivity', 'Fission/Fusion'] },
+                { id: 'p19', name: 'Electronic Devices', topics: ['Semiconductors', 'Logic Gates', 'PN Junction'] },
+                { id: 'p20', name: 'Experimental Skills', topics: ['Vernier Calipers', 'Screw Gauge', 'Simple Pendulum'] }
+            ]
+        },
+        chemistry: { 
+            name: 'Chemistry', 
+            icon: 'flask', 
+            chapters: [
+                { id: 'c1', name: 'Some Basic Concepts in Chemistry', topics: ['Mole Concept', 'Stoichiometry'] },
+                { id: 'c2', name: 'Atomic Structure', topics: ['Bohr Model', 'Quantum Numbers', 'Electronic Config'] },
+                { id: 'c3', name: 'Chemical Bonding', topics: ['VSEPR Theory', 'Hybridization', 'MOT'] },
+                { id: 'c4', name: 'Chemical Thermodynamics', topics: ['Enthalpy', 'Entropy', 'Gibbs Free Energy'] },
+                { id: 'c5', name: 'Solutions', topics: ['Raoults Law', 'Colligative Properties', 'Van\'t Hoff Factor'] },
+                { id: 'c6', name: 'Equilibrium', topics: ['Le Chatelier Principle', 'pH Calculation', 'Buffer Solutions'] },
+                { id: 'c7', name: 'Redox Reactions and Electrochemistry', topics: ['Nernst Equation', 'Conductance', 'Batteries'] },
+                { id: 'c8', name: 'Chemical Kinetics', topics: ['Rate Law', 'Order of Reaction', 'Arrhenius Equation'] },
+                { id: 'c9', name: 'Classification of Elements', topics: ['Periodic Trends', 'Ionization Energy'] },
+                { id: 'c10', name: 'p-Block Elements', topics: ['Group 13-18 Trends', 'Important Compounds'] },
+                { id: 'c11', name: 'd- and f-Block Elements', topics: ['Transition Metals', 'Lanthanoids', 'KMnO4/K2Cr2O7'] },
+                { id: 'c12', name: 'Co-ordination Compounds', topics: ['IUPAC Nomenclature', 'Isomerism', 'CFT'] },
+                { id: 'c13', name: 'Purification & Characterisation', topics: ['Chromatography', 'Qualitative Analysis'] },
+                { id: 'c14', name: 'Basic Principles of Organic Chemistry', topics: ['IUPAC Naming', 'Isomerism', 'Reaction Mechanisms'] },
+                { id: 'c15', name: 'Hydrocarbons', topics: ['Alkanes/Alkenes/Alkynes', 'Aromatic Hydrocarbons'] },
+                { id: 'c16', name: 'Organic Compounds containing Halogens', topics: ['SN1/SN2', 'Haloalkanes', 'Haloarenes'] },
+                { id: 'c17', name: 'Organic Compounds containing Oxygen', topics: ['Alcohols', 'Phenols', 'Ethers', 'Aldehydes', 'Ketones', 'Acids'] },
+                { id: 'c18', name: 'Organic Compounds containing Nitrogen', topics: ['Amines', 'Diazonium Salts'] },
+                { id: 'c19', name: 'Biomolecules', topics: ['Carbohydrates', 'Proteins', 'Nucleic Acids', 'Vitamins'] },
+                { id: 'c20', name: 'Principles Related to Practical Chemistry', topics: ['Titration', 'Salt Analysis'] }
+            ]
+        },
+        botany: { 
+            name: 'Botany', 
+            icon: 'leaf', 
+            chapters: [
+                { id: 'b1', name: 'Diversity in Living World', topics: ['Living World', 'Biological Classification', 'Plant Kingdom'] },
+                { id: 'b2', name: 'Structural Organisation in Plants', topics: ['Morphology of Flowering Plants', 'Anatomy of Flowering Plants'] },
+                { id: 'b3', name: 'Cell: Structure and Function', topics: ['Cell The Unit of Life', 'Biomolecules', 'Cell Cycle & Division'] },
+                { id: 'b4', name: 'Plant Physiology', topics: ['Photosynthesis', 'Respiration', 'Plant Growth & Development'] },
+                { id: 'b5', name: 'Reproduction in Flowering Plants', topics: ['Flower Structure', 'Pollination', 'Double Fertilization'] },
+                { id: 'b6', name: 'Genetics', topics: ['Principles of Inheritance', 'Molecular Basis of Inheritance'] },
+                { id: 'b7', name: 'Ecology', topics: ['Organisms & Populations', 'Ecosystem', 'Biodiversity'] }
+            ]
+        },
+        zoology: { 
+            name: 'Zoology', 
+            icon: 'skull', 
+            chapters: [
+                { id: 'z1', name: 'Animal Kingdom', topics: ['Classification of Animals', 'Non-Chordates', 'Chordates'] },
+                { id: 'z2', name: 'Structural Organisation in Animals', topics: ['Animal Tissues', 'Frog (Morphology/Anatomy)'] },
+                { id: 'z3', name: 'Human Physiology', topics: ['Digestion', 'Breathing', 'Circulation', 'Excretion', 'Locomotion', 'Neural Control', 'Chemical Control'] },
+                { id: 'z4', name: 'Human Reproduction', topics: ['Male/Female System', 'Gametogenesis', 'Reproductive Health'] },
+                { id: 'z5', name: 'Evolution', topics: ['Origin of Life', 'Evidences', 'Hardy-Weinberg'] },
+                { id: 'z6', name: 'Biology and Human Welfare', topics: ['Human Health & Disease', 'Microbes in Human Welfare'] },
+                { id: 'z7', name: 'Biotechnology', topics: ['Principles & Processes', 'Applications'] }
+            ]
+        }
     };
 
     // --- DOM ELEMENTS ---
@@ -109,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showScreen('screen-chapters');
     }
 
-    window.toggleChapter = (chapId, el) => { // Global for inline onclick
+    window.toggleChapter = (chapId, el) => {
         const parent = el.parentElement;
         parent.classList.toggle('selected');
         if (selectedChapterIds.includes(chapId)) {
@@ -141,12 +200,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     selectedTopicIds[chapId] = selectedTopicIds[chapId].filter(t => t !== topic);
                 }
-                // Auto-select parent chapter
                 if (!selectedChapterIds.includes(chapId)) {
-                    // Find the chapter DOM element and trigger click (hacky but works)
-                    // Better: just add to array and update UI
+                    // Auto-select chapter if a topic is picked (simplified)
+                    // In a real app we'd update the chapter checkbox UI too
                     selectedChapterIds.push(chapId);
-                    // Update main list UI... simplified for now
                 }
             };
             list.appendChild(div);
@@ -170,12 +227,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const count = parseInt(qCountRange.value);
         const prompt = document.getElementById('custom-prompt').value;
         
-        // Get names
         const chapterNames = selectedSubject.chapters
             .filter(c => selectedChapterIds.includes(c.id))
             .map(c => c.name);
             
-        // Flatten topics
         let topicNames = [];
         Object.values(selectedTopicIds).forEach(list => topicNames.push(...list));
 
@@ -229,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userAnswers[currentQIndex] === idx) btn.classList.add('selected');
             btn.onclick = () => {
                 userAnswers[currentQIndex] = idx;
-                renderQuestion(); // Re-render to show selection
+                renderQuestion(); 
                 playSound('click');
             };
             optsDiv.appendChild(btn);
@@ -282,24 +337,23 @@ document.addEventListener('DOMContentLoaded', () => {
         showScreen('screen-result');
     }
 
-    // --- VIP DOUBTS ---
+    // --- VIP DOUBTS (CHAT UI) ---
     const chatHistory = document.getElementById('chat-history');
     const doubtInput = document.getElementById('doubt-input');
 
-    document.getElementById('btn-send-doubt').onclick = async () => {
+    document.getElementById('btn-send-doubt').onclick = handleDoubt;
+    doubtInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleDoubt(); });
+
+    async function handleDoubt() {
         const text = doubtInput.value.trim();
         if (!text) return;
         
-        // Add user msg
-        chatHistory.innerHTML += `<div class="chat-msg user">${text}</div>`;
+        // Add User Message (Right)
+        addMessage(text, 'user');
         doubtInput.value = '';
-        chatHistory.scrollTop = chatHistory.scrollHeight;
         
-        // Loading placeholder
-        const loadDiv = document.createElement('div');
-        loadDiv.className = 'chat-msg ai';
-        loadDiv.innerText = '...';
-        chatHistory.appendChild(loadDiv);
+        // Add Loading Placeholder (Left)
+        const loadId = addMessage('...', 'ai');
 
         try {
             const res = await fetch(`${backendUrl}/resolve_doubt`, {
@@ -308,9 +362,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ query: text, language: currentLang })
             });
             const data = await res.json();
-            loadDiv.innerText = data.answer;
+            
+            // Replace loading with answer
+            const aiMsgDiv = document.getElementById(loadId);
+            if(aiMsgDiv) aiMsgDiv.innerHTML = `<div class="msg-content">${data.answer}</div>`;
+            
         } catch (e) {
-            loadDiv.innerText = "Error connecting to AI.";
+            const aiMsgDiv = document.getElementById(loadId);
+            if(aiMsgDiv) aiMsgDiv.innerHTML = `<div class="msg-content">Error connecting to AI.</div>`;
         }
     };
+
+    function addMessage(text, sender) {
+        const id = 'msg-' + Date.now();
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = `chat-msg ${sender}`;
+        div.innerHTML = `<div class="msg-content">${text}</div>`;
+        chatHistory.appendChild(div);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+        return id;
+    }
 });
